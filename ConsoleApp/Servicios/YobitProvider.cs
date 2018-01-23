@@ -1,13 +1,9 @@
-﻿using CloudFlareUtilities;
-using Dominio.Entidades;
+﻿using Dominio.Entidades;
 using Dominio.Interfaces;
 using Newtonsoft.Json;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
+using System.Net;
+using System.Threading;
 
 namespace Servicios
 {
@@ -18,37 +14,37 @@ namespace Servicios
 
         public void CargarOrdenes(Mercado mercado)
         {
-            Stopwatch sw = Stopwatch.StartNew();
-
-            var relaciones = mercado.ObetenerRelacionesEntreMonedas().Take(100);
-            System.Console.WriteLine(sw.ElapsedMilliseconds + " - Relaciones");
+            var relaciones = mercado.ObetenerRelacionesEntreMonedas();
             var page = string.Empty;
+            var n = 0;
             foreach(var i in relaciones.Select(x => x[0] + "_" + x[1]))
             {
-                if(page.Length + i.Length > 510)
+                n++;
+                if (page.Length + i.Length > 510)
                 {
-                    var url = string.Format(depth, page);
-                    System.Console.WriteLine(sw.ElapsedMilliseconds + " - inicia DownloadPage");
-                    var response = DownloadPage(url);
-                    System.Console.WriteLine(sw.ElapsedMilliseconds + " - inicia CargarPaginaDeOrdenes");
-                    CargarPaginaDeOrdenes(response, mercado);
-                    System.Console.WriteLine(sw.ElapsedMilliseconds + " - fin CargarPaginaDeOrdenes");
-                    page = string.Empty;
+                    System.Console.SetCursorPosition(1, 0);
+                    System.Console.WriteLine($"{n}/{relaciones.Count()} Obteniendo operaciones");
+                    CargarOrdenesPagina(page, mercado);
+                    page = i;
                 }
-                page += "-" + i;
+                else
+                {
+                    page += "-" + i;
+                }                
             }
             if (!string.IsNullOrEmpty(page))
             {
-                var url = string.Format(depth, page);
-                System.Console.WriteLine(sw.ElapsedMilliseconds + " - inicia DownloadPage2");
-                var response = DownloadPage(url);
-                System.Console.WriteLine(sw.ElapsedMilliseconds + " - inicia CargarPaginaDeOrdenes2");
-                CargarPaginaDeOrdenes(response, mercado);
-                System.Console.WriteLine(sw.ElapsedMilliseconds + " - fin CargarPaginaDeOrdenes2");
+                System.Console.SetCursorPosition(1, 0);
+                System.Console.WriteLine($"{n}/{relaciones.Count()} Obteniendo operaciones");
+                CargarOrdenesPagina(page, mercado);                
             }
+        }
 
-            sw.Stop();
-
+        private void CargarOrdenesPagina(string page, Mercado mercado)
+        {
+            var url = string.Format(depth, page);
+            var response = DownloadPage(url);
+            CargarPaginaDeOrdenes(response, mercado);
         }
 
         private void CargarPaginaDeOrdenes(dynamic response, Mercado mercado)
@@ -90,24 +86,15 @@ namespace Servicios
         
         private static dynamic DownloadPage(string url)
         {
-            var response = DownloadPageAsync(url).Result;
-            var responseString = Encoding.UTF8.GetString(response);
-            return JsonConvert.DeserializeObject(responseString);
-        }
-
-        private static async Task<byte[]> DownloadPageAsync(string url)
-        {
-            // ... Use HttpClient.
-            var handler = new ClearanceHandler
+            try
             {
-                MaxRetries = 2 // Optionally specify the number of retries, if clearance fails (default is 3).
-            };
-
-            using (HttpClient client = new HttpClient(handler))
-            using (HttpResponseMessage response = await client.GetAsync(url))
-            using (HttpContent content = response.Content)
+                Thread.Sleep(1000);
+                var response = new WebClient().DownloadString(url);
+                return JsonConvert.DeserializeObject(response);
+            }
+            catch
             {
-                return await content.ReadAsByteArrayAsync();
+                return DownloadPage(url);
             }
         }
     }

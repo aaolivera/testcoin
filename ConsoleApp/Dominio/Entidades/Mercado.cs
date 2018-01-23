@@ -27,7 +27,20 @@ namespace Dominio.Entidades
                 p.CargarOrdenes(this);
             }
         }
-        
+
+        public List<Moneda> ObtenerOperacionOptima(string origen, string destino, decimal cantidad)
+        {
+            Resetear();
+            var usd = 
+            Monedas[origen].Peso = cantidad;
+
+            var stack = new Queue<Moneda>();
+            stack.Enqueue(Monedas[origen]);
+            RecorrerMercado(stack);
+
+            return Recorrido(Monedas[destino]);
+        }
+
         public List<string[]> ObetenerRelacionesEntreMonedas()
         {
             return RelacionesEntreMonedas.ToList();
@@ -61,6 +74,55 @@ namespace Dominio.Entidades
                 Monedas.Add(moneda, retorno);
             }
             return retorno;
+        }
+
+        private void Resetear()
+        {
+            foreach (var m in Monedas)
+            {
+                m.Value.Peso = Decimal.MinValue;
+                m.Value.MonedaAnterior = null;
+                m.Value.Orden = null;
+                m.Value.Marcado = false;
+            }
+        }
+
+        private void RecorrerMercado(Queue<Moneda> stack)
+        {
+            var monedaActual = stack.Dequeue();
+
+            monedaActual.Marcado = true;
+            foreach (var n in monedaActual.OrdenesDeCompraPorMoneda.Where(x => !x.Value.MonedaAComprar.Marcado && x.Value.Ordenes.Any()))
+            {
+                try
+                {
+                    var monedaAComprar = n.Value.MonedaAComprar;
+                    var nuevoPeso = monedaActual.ConvertirA(monedaAComprar);
+                    if (nuevoPeso > monedaAComprar.Peso)
+                    {
+                        monedaAComprar.Peso = nuevoPeso;
+                        monedaAComprar.Orden = monedaActual.ObtenerOrden(monedaAComprar);
+                        monedaAComprar.MonedaAnterior = monedaActual;
+                    }
+                    stack.Enqueue(monedaAComprar);
+                }
+                catch (Exception e)
+                {
+
+                }
+            }
+            if (stack.Count > 0) RecorrerMercado(stack);
+        }
+
+        private List<Moneda> Recorrido(Moneda nodo)
+        {
+            if (nodo.MonedaAnterior == null)
+            {
+                return new List<Moneda>() { nodo };
+            }
+            var lista = Recorrido(nodo.MonedaAnterior);
+            lista.Add(nodo);
+            return lista;
         }
     }
 }
