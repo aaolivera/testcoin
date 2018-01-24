@@ -89,29 +89,35 @@ namespace Dominio.Entidades
 
         private void RecorrerMercado(Queue<Moneda> stack)
         {
-            var monedaActual = stack.Dequeue();
-
-            monedaActual.Marcado = true;
-            foreach (var n in monedaActual.OrdenesDeCompraPorMoneda.Where(x => !x.Value.MonedaAComprar.Marcado && x.Value.Ordenes.Any()))
+            while (stack.Any())
             {
-                try
-                {
-                    var monedaAComprar = n.Value.MonedaAComprar;
-                    var nuevoPeso = monedaActual.ConvertirA(monedaAComprar);
-                    if (nuevoPeso > monedaAComprar.Peso)
-                    {
-                        monedaAComprar.Peso = nuevoPeso;
-                        monedaAComprar.Orden = monedaActual.ObtenerOrden(monedaAComprar);
-                        monedaAComprar.MonedaAnterior = monedaActual;
-                    }
-                    stack.Enqueue(monedaAComprar);
-                }
-                catch (Exception e)
-                {
+                var monedaActual = stack.Dequeue();
 
+                monedaActual.Marcado = true;
+                
+                foreach (var n in monedaActual.OrdenesDeCompraPorMoneda.Where(x => x.Value.Ordenes.Any()))
+                {
+                    try
+                    {
+                        var monedaAComprar = n.Value.MonedaAComprar;
+                        var nuevoPeso = monedaActual.ConvertirA(monedaAComprar);
+                        if (nuevoPeso > monedaAComprar.Peso)
+                        {
+                            monedaAComprar.Peso = nuevoPeso;
+                            monedaAComprar.Orden = monedaActual.ObtenerOrden(monedaAComprar);
+                            monedaAComprar.MonedaAnterior = monedaActual;
+                        }
+                        if (!monedaAComprar.Marcado)
+                        {
+                            stack.Enqueue(monedaAComprar);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+
+                    }
                 }
             }
-            if (stack.Count > 0) RecorrerMercado(stack);
         }
 
         private List<Moneda> Recorrido(Moneda nodo)

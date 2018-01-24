@@ -2,6 +2,7 @@
 using Dominio.Interfaces;
 using Servicios;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ConsoleApp
 {
@@ -13,14 +14,20 @@ namespace ConsoleApp
             var mercado = new Mercado(providers);
             mercado.ActualizarOrdenes();
 
-            var resultado = mercado.ObtenerOperacionOptima("btc", "usd", 10);
-
-            foreach(var o in resultado)
+            while (true)
             {
-                System.Console.WriteLine(o.MonedaAnterior);
-                System.Console.WriteLine(o.Orden);
+                System.Console.WriteLine("Desde:");
+                var desde = System.Console.ReadLine();
+                System.Console.WriteLine("Hasta:");
+                var hasta = System.Console.ReadLine();
+                var resultado = mercado.ObtenerOperacionOptima(desde, hasta, 1);
+
+                foreach (var o in resultado)
+                {
+                    System.Console.WriteLine($"{o.Nombre}({o.Peso}) =>");
+                }
+                System.Console.ReadLine();
             }
-            System.Console.ReadLine();
         }
     }
 }

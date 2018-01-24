@@ -1,6 +1,7 @@
 ﻿using Dominio.Entidades;
 using Dominio.Interfaces;
 using Newtonsoft.Json;
+using System;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -92,7 +93,7 @@ namespace Servicios
                 var response = new WebClient().DownloadString(url);
                 return JsonConvert.DeserializeObject(response);
             }
-            catch
+            catch (Exception e)
             {
                 return DownloadPage(url);
             }
