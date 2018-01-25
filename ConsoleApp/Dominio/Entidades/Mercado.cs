@@ -36,7 +36,7 @@ namespace Dominio.Entidades
 
             var stack = new Queue<Moneda>();
             stack.Enqueue(Monedas[origen]);
-            RecorrerMercado(stack);
+            RecorrerMercado(stack, Monedas[destino]);
 
             return Recorrido(Monedas[destino]);
         }
@@ -87,15 +87,24 @@ namespace Dominio.Entidades
             }
         }
 
-        private void RecorrerMercado(Queue<Moneda> stack)
+        private void RecorrerMercado(Queue<Moneda> stack, Moneda destino)
         {
             while (stack.Any())
             {
                 var monedaActual = stack.Dequeue();
 
+                if(monedaActual == destino && stack.Any())
+                {
+                    if (!stack.Contains(monedaActual))
+                    {
+                        stack.Enqueue(destino);
+                    }
+                    continue;
+                }
+
                 monedaActual.Marcado = true;
                 
-                foreach (var n in monedaActual.OrdenesDeCompraPorMoneda.Where(x => x.Value.Ordenes.Any()))
+                foreach (var n in monedaActual.OrdenesDeCompraPorMoneda.Where(x => !x.Value.MonedaAComprar.Marcado && x.Value.Ordenes.Any()))
                 {
                     try
                     {
@@ -107,10 +116,7 @@ namespace Dominio.Entidades
                             monedaAComprar.Orden = monedaActual.ObtenerOrden(monedaAComprar);
                             monedaAComprar.MonedaAnterior = monedaActual;
                         }
-                        if (!monedaAComprar.Marcado)
-                        {
-                            stack.Enqueue(monedaAComprar);
-                        }
+                        stack.Enqueue(monedaAComprar);
                     }
                     catch (Exception e)
                     {

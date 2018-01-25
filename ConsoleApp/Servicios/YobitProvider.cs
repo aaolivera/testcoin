@@ -89,7 +89,7 @@ namespace Servicios
         {
             try
             {
-                Thread.Sleep(1000);
+                Thread.Sleep(1500);
                 var response = new WebClient().DownloadString(url);
                 return JsonConvert.DeserializeObject(response);
             }
