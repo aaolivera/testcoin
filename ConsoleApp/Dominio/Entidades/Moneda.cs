@@ -11,10 +11,9 @@ namespace Dominio.Entidades
         public Dictionary<Moneda, OrdenesDeCompraPorMoneda> OrdenesDeCompraPorMoneda { get; }
 
         //Variable auxiliar dijktra
-        public decimal Peso { get; set; }
+        public decimal Cantidad { get; set; }
         public bool Marcado { get; set; }
-        public Moneda MonedaAnterior { get; set; }
-        public Orden Orden { get; set; }
+        public OrdenesDeCompraPorMoneda OrdenesDeCompraMonedaAnterior { get; set; }
 
         public Moneda(string nombre)
         {
@@ -22,14 +21,34 @@ namespace Dominio.Entidades
             Nombre = nombre;
         }
 
-        public decimal ConvertirA(Moneda monedaDestino)
+        public bool ConvertirA(Moneda monedaDestino)
         {
             OrdenesDeCompraPorMoneda.TryGetValue(monedaDestino, out OrdenesDeCompraPorMoneda ordenesDeCompra);
-            if (ordenesDeCompra != null)
+            var ordenesDeCompraNecesarias = ordenesDeCompra.ObtenerOrdenesDeCompraPorCantidad(Cantidad);
+
+            if (ordenesDeCompraNecesarias == null) return false;
+
+            var cantidadDestino = 0M;
+            var cantidadOrigen = 0M;
+            foreach (var orden in ordenesDeCompraNecesarias.Ordenes)
             {
-                return ordenesDeCompra.Ordenes.Max(x => x.Precio) * this.Peso;
+                if(cantidadOrigen + orden.Cantidad < Cantidad)
+                {
+                    cantidadDestino += orden.Cantidad * orden.PrecioUnitario;
+                    cantidadOrigen += orden.Cantidad;
+                }
+                else
+                {
+                    cantidadDestino += (Cantidad - cantidadOrigen) * orden.PrecioUnitario;
+                }
             }
-            throw new Exception($"{this.Nombre} no se puede convertir a {monedaDestino.Nombre}");
+
+            if(monedaDestino.Cantidad < cantidadDestino)
+            {
+                monedaDestino.Cantidad = cantidadDestino;
+                monedaDestino.OrdenesDeCompraMonedaAnterior = ordenesDeCompraNecesarias;
+            }
+            return true;
         }
 
         public void AgregarRelacionPorMoneda(Moneda destino)
@@ -40,15 +59,15 @@ namespace Dominio.Entidades
             }
         }
 
-        public void AgregarOrdenDeCompra(Moneda monedaB, decimal precio, decimal cantidad)
+        public void AgregarOrdenDeCompra(Moneda monedaAVender, decimal precio, decimal cantidad)
         {
-            OrdenesDeCompraPorMoneda.TryGetValue(monedaB, out OrdenesDeCompraPorMoneda ordenes);
+            OrdenesDeCompraPorMoneda.TryGetValue(monedaAVender, out OrdenesDeCompraPorMoneda ordenes);
             if(ordenes == null)
             {
-                ordenes = new OrdenesDeCompraPorMoneda(this, monedaB);
-                OrdenesDeCompraPorMoneda[monedaB] = ordenes;
+                ordenes = new OrdenesDeCompraPorMoneda(this, monedaAVender);
+                OrdenesDeCompraPorMoneda[monedaAVender] = ordenes;
             }
-            ordenes.Ordenes.Add(new Orden { Cantidad = cantidad, Precio = precio});
+            ordenes.Ordenes.Add(new Orden { Cantidad = cantidad, PrecioUnitario = precio});
 
         }
 
@@ -57,14 +76,24 @@ namespace Dominio.Entidades
             OrdenesDeCompraPorMoneda.TryGetValue(monedaAComprar, out OrdenesDeCompraPorMoneda ordenesDeCompra);
             if (ordenesDeCompra != null)
             {
-                return ordenesDeCompra.Ordenes.OrderByDescending(x => x.Precio).First();
+                return ordenesDeCompra.Ordenes.OrderByDescending(x => x.PrecioUnitario).First();
+            }
+            throw new Exception($"{this.Nombre} no se puede convertir a {monedaAComprar.Nombre}");
+        }
+
+        public void RemoverOrden(Moneda monedaAComprar, Orden orden)
+        {
+            OrdenesDeCompraPorMoneda.TryGetValue(monedaAComprar, out OrdenesDeCompraPorMoneda ordenesDeCompra);
+            if (ordenesDeCompra != null)
+            {
+                ordenesDeCompra.Ordenes.Remove(orden);
             }
             throw new Exception($"{this.Nombre} no se puede convertir a {monedaAComprar.Nombre}");
         }
 
         public override string ToString()
         {
-            return "Moneda: " + Nombre + " - Cantidad: "+ Peso;
+            return "Moneda: " + Nombre + " - Cantidad: "+ Cantidad;
         }
     }
 }

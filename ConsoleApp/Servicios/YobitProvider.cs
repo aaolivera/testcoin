@@ -11,7 +11,7 @@ namespace Servicios
     public class YobitProvider : IProvider
     {
         private readonly string info = @"https://yobit.net/api/3/info";
-        private readonly string depth = @"https://yobit.net/api/3/depth/{0}?limit=2&ignore_invalid=1";
+        private readonly string depth = @"https://yobit.net/api/3/depth/{0}?ignore_invalid=1";
 
         public void CargarOrdenes(Mercado mercado)
         {
@@ -23,7 +23,6 @@ namespace Servicios
                 n++;
                 if (page.Length + i.Length > 510)
                 {
-                    System.Console.SetCursorPosition(1, 0);
                     System.Console.WriteLine($"{n}/{relaciones.Count()} Obteniendo operaciones");
                     CargarOrdenesPagina(page, mercado);
                     page = i;
@@ -35,7 +34,6 @@ namespace Servicios
             }
             if (!string.IsNullOrEmpty(page))
             {
-                System.Console.SetCursorPosition(1, 0);
                 System.Console.WriteLine($"{n}/{relaciones.Count()} Obteniendo operaciones");
                 CargarOrdenesPagina(page, mercado);                
             }
@@ -89,7 +87,7 @@ namespace Servicios
         {
             try
             {
-                Thread.Sleep(1500);
+                Thread.Sleep(1000);
                 var response = new WebClient().DownloadString(url);
                 return JsonConvert.DeserializeObject(response);
             }

@@ -31,14 +31,29 @@ namespace Dominio.Entidades
         public List<Moneda> ObtenerOperacionOptima(string origen, string destino, decimal cantidad)
         {
             Resetear();
-            var usd = 
-            Monedas[origen].Peso = cantidad;
+            var monedaOrigen = Monedas[origen];
+            var monedaDestino = Monedas[destino];
+            monedaOrigen.Cantidad = cantidad;
 
             var stack = new Queue<Moneda>();
-            stack.Enqueue(Monedas[origen]);
-            RecorrerMercado(stack, Monedas[destino]);
+            stack.Enqueue(monedaOrigen);
+            RecorrerMercado(stack, monedaDestino);
 
-            return Recorrido(Monedas[destino]);
+            return Recorrido(monedaDestino);
+        }
+
+        public void EliminarOrdenes(List<Moneda> resultado)
+        {
+            foreach(var moneda in resultado)
+            {
+                if(moneda.OrdenesDeCompraMonedaAnterior != null)
+                {
+                    foreach (var orden in moneda.OrdenesDeCompraMonedaAnterior.Ordenes)
+                    {
+                        moneda.OrdenesDeCompraMonedaAnterior.MonedaQueQuieroVender.OrdenesDeCompraPorMoneda[moneda].Ordenes.Remove(orden);
+                    }
+                }
+            }
         }
 
         public List<string[]> ObetenerRelacionesEntreMonedas()
@@ -56,14 +71,14 @@ namespace Dominio.Entidades
             monedaB.AgregarRelacionPorMoneda(monedaA);
         }
 
-        public void AgregarOrdenDeCompra(string monedaNameA, string monedaNameB, decimal precio, decimal cantidad)
+        public void AgregarOrdenDeCompra(string monedaAcomprar, string monedaAVender, decimal precio, decimal cantidad)
         {
-            ObtenerMoneda(monedaNameA).AgregarOrdenDeCompra(ObtenerMoneda(monedaNameB), precio, cantidad);
+            ObtenerMoneda(monedaAcomprar).AgregarOrdenDeCompra(ObtenerMoneda(monedaAVender), precio, cantidad);
         }
 
-        public void AgregarOrdenDeVenta(string monedaNameA, string monedaNameB, decimal precio, decimal cantidad)
+        public void AgregarOrdenDeVenta(string monedaAVender, string monedaAComprar, decimal precio, decimal cantidad)
         {
-            AgregarOrdenDeCompra(monedaNameB, monedaNameA, 1 / precio, precio * cantidad);
+            AgregarOrdenDeCompra(monedaAComprar, monedaAVender, 1 / precio, precio * cantidad);
         }
 
         private Moneda ObtenerMoneda(string moneda)
@@ -80,9 +95,8 @@ namespace Dominio.Entidades
         {
             foreach (var m in Monedas)
             {
-                m.Value.Peso = Decimal.MinValue;
-                m.Value.MonedaAnterior = null;
-                m.Value.Orden = null;
+                m.Value.Cantidad = Decimal.MinValue;
+                m.Value.OrdenesDeCompraMonedaAnterior = null;
                 m.Value.Marcado = false;
             }
         }
@@ -104,23 +118,12 @@ namespace Dominio.Entidades
 
                 monedaActual.Marcado = true;
                 
-                foreach (var n in monedaActual.OrdenesDeCompraPorMoneda.Where(x => !x.Value.MonedaAComprar.Marcado && x.Value.Ordenes.Any()))
+                foreach (var n in monedaActual.OrdenesDeCompraPorMoneda.Where(x => !x.Value.MonedaQueQuieroComprar.Marcado && x.Value.Ordenes.Any()))
                 {
-                    try
+                    var monedaAComprar = n.Value.MonedaQueQuieroComprar;
+                    if (monedaActual.ConvertirA(monedaAComprar))
                     {
-                        var monedaAComprar = n.Value.MonedaAComprar;
-                        var nuevoPeso = monedaActual.ConvertirA(monedaAComprar);
-                        if (nuevoPeso > monedaAComprar.Peso)
-                        {
-                            monedaAComprar.Peso = nuevoPeso;
-                            monedaAComprar.Orden = monedaActual.ObtenerOrden(monedaAComprar);
-                            monedaAComprar.MonedaAnterior = monedaActual;
-                        }
                         stack.Enqueue(monedaAComprar);
-                    }
-                    catch (Exception e)
-                    {
-
                     }
                 }
             }
@@ -128,11 +131,11 @@ namespace Dominio.Entidades
 
         private List<Moneda> Recorrido(Moneda nodo)
         {
-            if (nodo.MonedaAnterior == null)
+            if (nodo.OrdenesDeCompraMonedaAnterior == null)
             {
                 return new List<Moneda>() { nodo };
             }
-            var lista = Recorrido(nodo.MonedaAnterior);
+            var lista = Recorrido(nodo.OrdenesDeCompraMonedaAnterior.MonedaQueQuieroVender);
             lista.Add(nodo);
             return lista;
         }
