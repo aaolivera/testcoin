@@ -22,7 +22,7 @@ namespace ConsoleApp
                 var desde = System.Console.ReadLine();
                 System.Console.Write("-Hasta:");
                 var hasta = System.Console.ReadLine();
-                for(var i = 0; i < 12; i++)
+                for(var i = 0; i < 4; i++)
                 {
                     var cantidad = 1M;
                     cantidad = ObtenerOperacion(mercado, desde, hasta, cantidad);
