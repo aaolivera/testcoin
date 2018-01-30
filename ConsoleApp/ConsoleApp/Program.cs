@@ -18,15 +18,16 @@ namespace ConsoleApp
             var monedaPilar = System.Console.ReadLine();
             System.Console.WriteLine("");
             var i = 0;
+            var inicial = 0.0001M;
             foreach (var moneda in monedas)
             {
-                var cantidad = ObtenerOperacion(mercado, monedaPilar, moneda.Nombre, 1, out int m);
+                var cantidad = ObtenerOperacion(mercado, monedaPilar, moneda.Nombre, inicial, out int m);
                 if (cantidad > 0)
                 {
                     var resultado = ObtenerOperacion(mercado, moneda.Nombre, monedaPilar, cantidad, out int movimientos);
-                    if((resultado - 1) > 0)
+                    if ((resultado - inicial) > 0)
                     {
-                        System.Console.Write($"({i.ToString("0000")}-{movimientos.ToString("00")}){moneda.Nombre.PadRight(10)} = {(resultado - 1).ToString("00.00")} {monedaPilar.ToUpper()}");
+                        System.Console.Write($"({i.ToString("0000")}-{movimientos.ToString("00")}){moneda.Nombre.PadRight(10)} = {(((resultado - inicial)*100)/inicial).ToString("00.00")}%");
                         System.Console.WriteLine("");
                     }
                 }
@@ -41,13 +42,10 @@ namespace ConsoleApp
             //    var desde = System.Console.ReadLine();
             //    System.Console.Write("-Hasta:");
             //    var hasta = System.Console.ReadLine();
-            //    for(var i = 0; i < 4; i++)
-            //    {
-            //        var cantidad = 1M;
-            //        cantidad = ObtenerOperacion(mercado, desde, hasta, cantidad);
-            //        ObtenerOperacion(mercado, hasta, desde, cantidad);
-            //        System.Console.Write("Fin");
-            //    }
+            //    var cantidad = 1M;
+            //    cantidad = ObtenerOperacion(mercado, desde, hasta, cantidad, out int mov);
+            //    ObtenerOperacion(mercado, hasta, desde, cantidad, out mov);
+            //    System.Console.Write("Fin");
             //    System.Console.ReadLine();
             //}
         }
