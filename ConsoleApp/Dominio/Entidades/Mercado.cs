@@ -81,7 +81,12 @@ namespace Dominio.Entidades
             AgregarOrdenDeCompra(monedaAComprar, monedaAVender, 1 / precio, precio * cantidad);
         }
 
-        private Moneda ObtenerMoneda(string moneda)
+        public List<Moneda> ObtenerMonedas()
+        {
+            return Monedas.Values.ToList(); 
+        }
+
+        public Moneda ObtenerMoneda(string moneda)
         {
             if (!Monedas.TryGetValue(moneda, out Moneda retorno))
             {
