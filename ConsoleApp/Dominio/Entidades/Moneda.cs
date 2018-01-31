@@ -1,7 +1,7 @@
 ﻿using Dominio.Helper;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading;
 
 namespace Dominio.Entidades
 {
@@ -12,17 +12,17 @@ namespace Dominio.Entidades
         public Dictionary<Moneda, List<Orden>> OrdenesDeCompraPorMoneda { get; }
 
         //Variable auxiliar dijktra
-        public decimal Cantidad { get; set; }
-        public bool Marcado { get; set; }
-        public List<Orden> OrdenesDeCompraMonedaAnterior { get; set; }
+        public Dictionary<Guid, DijkstraAux> DijkstraAux { get; set; }
+        private static Mutex mutex = new Mutex();
 
         public Moneda(string nombre)
         {
             OrdenesDeCompraPorMoneda = new Dictionary<Moneda, List<Orden>>();
+            DijkstraAux = new Dictionary<Guid, DijkstraAux>();
             Nombre = nombre;
         }
 
-        public bool ConvertirA(Moneda monedaDestino)
+        public bool ConvertirA(Moneda monedaDestino, Guid ejecucion)
         {
             OrdenesDeCompraPorMoneda.TryGetValue(monedaDestino, out List<Orden> ordenesDeCompra);
 
@@ -34,13 +34,13 @@ namespace Dominio.Entidades
             foreach (var orden in ordenesDeCompra)
             {
                 var cantidadAVender = 0M;
-                if (cantidadOrigen + orden.Cantidad < Cantidad)
+                if (cantidadOrigen + orden.Cantidad < Cantidad(ejecucion))
                 {
                     cantidadAVender = orden.Cantidad;
                 }
-                else if (cantidadOrigen + orden.Cantidad > Cantidad)
+                else if (cantidadOrigen + orden.Cantidad > Cantidad(ejecucion))
                 {
-                    cantidadAVender = (Cantidad - cantidadOrigen);
+                    cantidadAVender = (Cantidad(ejecucion) - cantidadOrigen);
                 }
                 else
                 {
@@ -51,10 +51,10 @@ namespace Dominio.Entidades
                 ordenesDecompraNecesarias.Add(orden);
             }
 
-            if(cantidadOrigen == Cantidad && monedaDestino.Cantidad < cantidadDestino)
+            if(cantidadOrigen == Cantidad(ejecucion) && monedaDestino.Cantidad(ejecucion) < cantidadDestino)
             {
-                monedaDestino.Cantidad = cantidadDestino;
-                monedaDestino.OrdenesDeCompraMonedaAnterior = ordenesDecompraNecesarias;
+                monedaDestino.SetCantidad(cantidadDestino, ejecucion);
+                monedaDestino.SetOrdenesDeCompraMonedaAnterior(ordenesDecompraNecesarias, ejecucion);
                 return true;
             }
             return false;
@@ -82,7 +82,51 @@ namespace Dominio.Entidades
         
         public override string ToString()
         {
-            return "Moneda: " + Nombre + " - Cantidad: "+ Cantidad;
+            return "Moneda: " + Nombre + " - Cantidad: ";
+        }
+
+        public void SetCantidad (decimal cantidad, Guid ejecucion)
+        {
+            GetAux(ejecucion).Cantidad = cantidad;
+        }
+
+        public void SetOrdenesDeCompraMonedaAnterior(List<Orden> ordenes, Guid ejecucion)
+        {
+            GetAux(ejecucion).OrdenesDeCompraMonedaAnterior = ordenes;
+        }
+
+        public List<Orden> OrdenesDeCompraMonedaAnterior(Guid ejecucion)
+        {
+            return GetAux(ejecucion).OrdenesDeCompraMonedaAnterior;
+        }
+
+        public decimal Cantidad(Guid ejecucion)
+        {
+            return GetAux(ejecucion).Cantidad;
+        }
+
+        public void Vicitar(Guid ejecucion)
+        {
+            GetAux(ejecucion).Marcado = true;
+        }
+
+        public bool Vicitado(Guid ejecucion)
+        {
+            return GetAux(ejecucion).Marcado;
+        }
+
+        private DijkstraAux GetAux(Guid ejecucion)
+        {
+            DijkstraAux.TryGetValue(ejecucion, out DijkstraAux aux);
+            if (aux == null)
+            {
+                mutex.WaitOne();
+                aux = new DijkstraAux() { Cantidad = decimal.MinValue , OrdenesDeCompraMonedaAnterior = new List<Orden>()};
+                DijkstraAux.Add(ejecucion, aux);
+                mutex.ReleaseMutex();
+            }
+            
+            return aux;
         }
     }
 }

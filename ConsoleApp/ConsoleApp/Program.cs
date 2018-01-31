@@ -1,8 +1,10 @@
 ﻿using Dominio.Entidades;
 using Dominio.Interfaces;
 using Servicios;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ConsoleApp
 {
@@ -17,61 +19,41 @@ namespace ConsoleApp
             System.Console.Write("Moneda Pilar: ");
             var monedaPilar = System.Console.ReadLine();
             System.Console.WriteLine("");
-            var i = 0;
             var inicial = 0.00005M;
+            var tasks = new List<Task>();
             foreach (var moneda in monedas)
             {
-                var cantidad = ObtenerOperacion(mercado, monedaPilar, moneda.Nombre, inicial, out int m);
-                if (cantidad > 0)
+                tasks.Add(ChequearMoneda(mercado, monedaPilar, inicial, moneda));
+            }
+            Task.WaitAll(tasks.ToArray());
+            System.Console.ReadLine();
+        }
+        
+        private static async Task ChequearMoneda(Mercado mercado, string monedaPilar, decimal inicial, string monedaDestino)
+        {
+            await Task.Run(() =>
+            {
+                var movimientosIda = mercado.ObtenerOperacionOptima(monedaPilar, monedaDestino, inicial, out Guid ejecucionIda);
+                var cantidadDestino = movimientosIda.Last().Cantidad(ejecucionIda);
+                if (cantidadDestino > 0)
                 {
-                    var resultado = ObtenerOperacion(mercado, moneda.Nombre, monedaPilar, cantidad, out int movimientos);
-                    if ((resultado - inicial) > 0)
+                    var movimientosVuelta = mercado.ObtenerOperacionOptima(monedaDestino, monedaPilar, cantidadDestino, out Guid ejecucionvuelta);
+                    var cantidadVuelta = movimientosVuelta.Last().Cantidad(ejecucionvuelta);
+                    if ((cantidadVuelta - inicial) > 0)
                     {
-                        System.Console.Write($"({i.ToString("0000")}-{movimientos.ToString("00")}){moneda.Nombre.PadRight(10)} = {(((resultado - inicial)*100)/inicial).ToString("00.00")}%");
+                        var texto = $"{(movimientosIda.Count + movimientosVuelta.Count).ToString("00")},{(((cantidadVuelta - inicial) * 100) / inicial).ToString("00.00")},";
+
+                        foreach(var m in movimientosIda)
+                        {
+                            texto += $"({m.Nombre}:{m.Cantidad(ejecucionIda)})";
+                        }
+
+
+                        System.Console.Write($"({movimientos.ToString("00")}){moneda.Nombre.PadRight(10)} = {(((resultado - inicial) * 100) / inicial).ToString("00.00")}%");
                         System.Console.WriteLine("");
                     }
-                }
-                i++;
-            }
-            System.Console.ReadLine();
-            //while (true)
-            //{
-            //    System.Console.WriteLine("----------------------------");
-            //    System.Console.WriteLine("----------------------------");
-            //    System.Console.Write("-Desde:");
-            //    var desde = System.Console.ReadLine();
-            //    System.Console.Write("-Hasta:");
-            //    var hasta = System.Console.ReadLine();
-            //    var cantidad = 1M;
-            //    cantidad = ObtenerOperacion(mercado, desde, hasta, cantidad, out int mov);
-            //    ObtenerOperacion(mercado, hasta, desde, cantidad, out mov);
-            //    System.Console.Write("Fin");
-            //    System.Console.ReadLine();
-            //}
-        }
-
-        private async void ObtenerOperacion(Mercado mercado, string desde, string hasta, decimal cantidad)
-        {
-            int movimientos;
-            var resultado = await mercado.ObtenerOperacionOptima(desde, hasta, cantidad);
-            //mercado.EliminarOrdenes(resultado);
-            
-            for (var j = 0; j < resultado.Count; j++)
-            {
-                var moneda = resultado[j];
-                //System.Console.Write($"{moneda.Nombre}({moneda.Cantidad.ToString("#.##########")}) => ");
-                if (j == resultado.Count - 1) cantidad = moneda.Cantidad;
-            }
-            movimientos = resultado.Count;
-            if (cantidad > 0)
-            {
-                var resultadoVuelta = ObtenerOperacion(mercado, moneda.Nombre, monedaPilar, cantidad);
-                if ((resultado - inicial) > 0)
-                {
-                    System.Console.Write($"({i.ToString("0000")}-{movimientos.ToString("00")}){moneda.Nombre.PadRight(10)} = {(((resultado - inicial) * 100) / inicial).ToString("00.00")}%");
-                    System.Console.WriteLine("");
-                }
-            }
-        }
+                };
+            });
+        }        
     }
 }

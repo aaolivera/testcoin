@@ -40,6 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Entidades\DijkstraAux.cs" />
     <Compile Include="Entidades\Mercado.cs" />
     <Compile Include="Entidades\Orden.cs" />
     <Compile Include="Entidades\Moneda.cs" />

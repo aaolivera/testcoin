@@ -29,32 +29,32 @@ namespace Dominio.Entidades
             }
         }
         
-        public async Task<List<Moneda>> ObtenerOperacionOptima(string origen, string destino, decimal cantidad)
+        public List<Moneda> ObtenerOperacionOptima(string origen, string destino, decimal cantidad, out Guid ejecucion)
         {
-            Resetear();
+            ejecucion = Guid.NewGuid();
             var monedaOrigen = Monedas[origen];
             var monedaDestino = Monedas[destino];
-            monedaOrigen.Cantidad = cantidad;
+            monedaOrigen.SetCantidad(cantidad, ejecucion);
 
             var stack = new Queue<Moneda>();
             stack.Enqueue(monedaOrigen);
-            RecorrerMercado(stack, monedaDestino);
+            RecorrerMercado(stack, monedaDestino, ejecucion);
 
-            return Recorrido(monedaDestino);
+            return Recorrido(monedaDestino, ejecucion);
         }
 
         public void EliminarOrdenes(List<Moneda> resultado)
         {
-            foreach(var moneda in resultado)
-            {
-                if(moneda.OrdenesDeCompraMonedaAnterior != null)
-                {
-                    foreach (var orden in moneda.OrdenesDeCompraMonedaAnterior)
-                    {
-                        orden.MonedaQueQuieroVender.OrdenesDeCompraPorMoneda[moneda].Remove(orden);
-                    }
-                }
-            }
+            //foreach(var moneda in resultado)
+            //{
+            //    if(moneda.OrdenesDeCompraMonedaAnterior != null)
+            //    {
+            //        foreach (var orden in moneda.OrdenesDeCompraMonedaAnterior)
+            //        {
+            //            orden.MonedaQueQuieroVender.OrdenesDeCompraPorMoneda[moneda].Remove(orden);
+            //        }
+            //    }
+            //}
         }
 
         public List<string[]> ObetenerRelacionesEntreMonedas()
@@ -96,18 +96,8 @@ namespace Dominio.Entidades
             }
             return retorno;
         }
-
-        private void Resetear()
-        {
-            foreach (var m in Monedas)
-            {
-                m.Value.Cantidad = Decimal.MinValue;
-                m.Value.OrdenesDeCompraMonedaAnterior = null;
-                m.Value.Marcado = false;
-            }
-        }
-
-        private void RecorrerMercado(Queue<Moneda> stack, Moneda destino)
+        
+        private void RecorrerMercado(Queue<Moneda> stack, Moneda destino, Guid ejecucion)
         {
             while (stack.Any())
             {
@@ -122,12 +112,12 @@ namespace Dominio.Entidades
                     continue;
                 }
 
-                monedaActual.Marcado = true;
+                monedaActual.Vicitar(ejecucion);
                 
-                foreach (var n in monedaActual.OrdenesDeCompraPorMoneda.Where(x => !x.Key.Marcado && x.Value.Any()))
+                foreach (var n in monedaActual.OrdenesDeCompraPorMoneda.Where(x => !x.Key.Vicitado(ejecucion) && x.Value.Any()))
                 {
                     var monedaAComprar = n.Key;
-                    if (monedaActual.ConvertirA(monedaAComprar))
+                    if (monedaActual.ConvertirA(monedaAComprar, ejecucion))
                     {
                         stack.Enqueue(monedaAComprar);
                     }
@@ -135,13 +125,13 @@ namespace Dominio.Entidades
             }
         }
 
-        private List<Moneda> Recorrido(Moneda nodo)
+        private List<Moneda> Recorrido(Moneda nodo, Guid ejecucion)
         {
-            if (nodo.OrdenesDeCompraMonedaAnterior == null || !nodo.OrdenesDeCompraMonedaAnterior.Any())
+            if (nodo.OrdenesDeCompraMonedaAnterior(ejecucion) == null || !nodo.OrdenesDeCompraMonedaAnterior(ejecucion).Any())
             {
                 return new List<Moneda>() { nodo };
             }
-            var lista = Recorrido(nodo.OrdenesDeCompraMonedaAnterior.First().MonedaQueQuieroVender);
+            var lista = Recorrido(nodo.OrdenesDeCompraMonedaAnterior(ejecucion).First().MonedaQueQuieroVender, ejecucion);
             lista.Add(nodo);
             return lista;
         }
