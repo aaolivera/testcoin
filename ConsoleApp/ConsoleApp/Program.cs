@@ -23,7 +23,7 @@ namespace ConsoleApp
             var tasks = new List<Task>();
             foreach (var moneda in monedas)
             {
-                tasks.Add(ChequearMoneda(mercado, monedaPilar, inicial, moneda));
+                tasks.Add(ChequearMoneda(mercado, monedaPilar, inicial, moneda.Nombre));
             }
             Task.WaitAll(tasks.ToArray());
             System.Console.ReadLine();
@@ -39,7 +39,7 @@ namespace ConsoleApp
                 {
                     var movimientosVuelta = mercado.ObtenerOperacionOptima(monedaDestino, monedaPilar, cantidadDestino, out Guid ejecucionvuelta);
                     var cantidadVuelta = movimientosVuelta.Last().Cantidad(ejecucionvuelta);
-                    if ((cantidadVuelta - inicial) > 0)
+                    if ((cantidadVuelta - inicial) > 10)
                     {
                         var texto = $"{(movimientosIda.Count + movimientosVuelta.Count).ToString("00")},{(((cantidadVuelta - inicial) * 100) / inicial).ToString("00.00")},";
 
@@ -47,10 +47,11 @@ namespace ConsoleApp
                         {
                             texto += $"({m.Nombre}:{m.Cantidad(ejecucionIda)})";
                         }
-
-
-                        System.Console.Write($"({movimientos.ToString("00")}){moneda.Nombre.PadRight(10)} = {(((resultado - inicial) * 100) / inicial).ToString("00.00")}%");
-                        System.Console.WriteLine("");
+                        foreach (var m in movimientosVuelta)
+                        {
+                            texto += $"({m.Nombre}:{m.Cantidad(ejecucionvuelta)})";
+                        }
+                        System.Console.WriteLine(texto);
                     }
                 };
             });

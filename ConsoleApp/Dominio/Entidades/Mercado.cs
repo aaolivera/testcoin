@@ -1,8 +1,8 @@
-﻿using Dominio.Interfaces;
+﻿using Dominio.Helper;
+using Dominio.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Dominio.Entidades
 {
@@ -31,7 +31,7 @@ namespace Dominio.Entidades
         
         public List<Moneda> ObtenerOperacionOptima(string origen, string destino, decimal cantidad, out Guid ejecucion)
         {
-            ejecucion = Guid.NewGuid();
+            ejecucion = (origen + destino).StringToGUID();
             var monedaOrigen = Monedas[origen];
             var monedaDestino = Monedas[destino];
             monedaOrigen.SetCantidad(cantidad, ejecucion);
@@ -42,7 +42,7 @@ namespace Dominio.Entidades
 
             return Recorrido(monedaDestino, ejecucion);
         }
-
+        
         public void EliminarOrdenes(List<Moneda> resultado)
         {
             //foreach(var moneda in resultado)
