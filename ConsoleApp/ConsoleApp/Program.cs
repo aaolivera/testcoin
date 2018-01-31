@@ -18,7 +18,7 @@ namespace ConsoleApp
             var monedaPilar = System.Console.ReadLine();
             System.Console.WriteLine("");
             var i = 0;
-            var inicial = 0.0001M;
+            var inicial = 0.00005M;
             foreach (var moneda in monedas)
             {
                 var cantidad = ObtenerOperacion(mercado, monedaPilar, moneda.Nombre, inicial, out int m);
@@ -50,9 +50,10 @@ namespace ConsoleApp
             //}
         }
 
-        private static decimal ObtenerOperacion(Mercado mercado, string desde, string hasta, decimal cantidad, out int movimientos)
+        private async void ObtenerOperacion(Mercado mercado, string desde, string hasta, decimal cantidad)
         {
-            var resultado = mercado.ObtenerOperacionOptima(desde, hasta, cantidad);
+            int movimientos;
+            var resultado = await mercado.ObtenerOperacionOptima(desde, hasta, cantidad);
             //mercado.EliminarOrdenes(resultado);
             
             for (var j = 0; j < resultado.Count; j++)
@@ -62,7 +63,15 @@ namespace ConsoleApp
                 if (j == resultado.Count - 1) cantidad = moneda.Cantidad;
             }
             movimientos = resultado.Count;
-            return cantidad;
+            if (cantidad > 0)
+            {
+                var resultadoVuelta = ObtenerOperacion(mercado, moneda.Nombre, monedaPilar, cantidad);
+                if ((resultado - inicial) > 0)
+                {
+                    System.Console.Write($"({i.ToString("0000")}-{movimientos.ToString("00")}){moneda.Nombre.PadRight(10)} = {(((resultado - inicial) * 100) / inicial).ToString("00.00")}%");
+                    System.Console.WriteLine("");
+                }
+            }
         }
     }
 }

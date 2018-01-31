@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Dominio.Entidades
 {
@@ -27,8 +28,8 @@ namespace Dominio.Entidades
                 p.CargarOrdenes(this);
             }
         }
-
-        public List<Moneda> ObtenerOperacionOptima(string origen, string destino, decimal cantidad)
+        
+        public async Task<List<Moneda>> ObtenerOperacionOptima(string origen, string destino, decimal cantidad)
         {
             Resetear();
             var monedaOrigen = Monedas[origen];
@@ -48,9 +49,9 @@ namespace Dominio.Entidades
             {
                 if(moneda.OrdenesDeCompraMonedaAnterior != null)
                 {
-                    foreach (var orden in moneda.OrdenesDeCompraMonedaAnterior.Ordenes)
+                    foreach (var orden in moneda.OrdenesDeCompraMonedaAnterior)
                     {
-                        moneda.OrdenesDeCompraMonedaAnterior.MonedaQueQuieroVender.OrdenesDeCompraPorMoneda[moneda].Ordenes.Remove(orden);
+                        orden.MonedaQueQuieroVender.OrdenesDeCompraPorMoneda[moneda].Remove(orden);
                     }
                 }
             }
@@ -123,9 +124,9 @@ namespace Dominio.Entidades
 
                 monedaActual.Marcado = true;
                 
-                foreach (var n in monedaActual.OrdenesDeCompraPorMoneda.Where(x => !x.Value.MonedaQueQuieroComprar.Marcado && x.Value.Ordenes.Any()))
+                foreach (var n in monedaActual.OrdenesDeCompraPorMoneda.Where(x => !x.Key.Marcado && x.Value.Any()))
                 {
-                    var monedaAComprar = n.Value.MonedaQueQuieroComprar;
+                    var monedaAComprar = n.Key;
                     if (monedaActual.ConvertirA(monedaAComprar))
                     {
                         stack.Enqueue(monedaAComprar);
@@ -136,11 +137,11 @@ namespace Dominio.Entidades
 
         private List<Moneda> Recorrido(Moneda nodo)
         {
-            if (nodo.OrdenesDeCompraMonedaAnterior == null)
+            if (nodo.OrdenesDeCompraMonedaAnterior == null || !nodo.OrdenesDeCompraMonedaAnterior.Any())
             {
                 return new List<Moneda>() { nodo };
             }
-            var lista = Recorrido(nodo.OrdenesDeCompraMonedaAnterior.MonedaQueQuieroVender);
+            var lista = Recorrido(nodo.OrdenesDeCompraMonedaAnterior.First().MonedaQueQuieroVender);
             lista.Add(nodo);
             return lista;
         }

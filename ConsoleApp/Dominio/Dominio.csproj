@@ -41,9 +41,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Entidades\Mercado.cs" />
-    <Compile Include="Entidades\OrdenesDeCompraPorMoneda.cs" />
     <Compile Include="Entidades\Orden.cs" />
     <Compile Include="Entidades\Moneda.cs" />
+    <Compile Include="Helper\ListExt.cs" />
     <Compile Include="Interfaces\IProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
