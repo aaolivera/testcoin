@@ -6,5 +6,6 @@ namespace Dominio.Interfaces
     {
         void CargarMonedas(Mercado mercado);
         void CargarOrdenes(Mercado mercado);
+        decimal EjecutarMovimiento(Moneda actual, Moneda siguiente, decimal inicial);
     }
 }

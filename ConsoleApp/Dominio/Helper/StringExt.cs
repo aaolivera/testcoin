@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -7,13 +8,17 @@ namespace Dominio.Helper
 {
     public static class StringExt
     {
-        public static Guid StringToGUID(this string value)
+        
+        public static string HmacShaDigest(this string message, string secret)
         {
-            // Create a new instance of the MD5CryptoServiceProvider object.
-            MD5 md5Hasher = MD5.Create();
-            // Convert the input string to a byte array and compute the hash.
-            byte[] data = md5Hasher.ComputeHash(Encoding.Default.GetBytes(value));
-            return new Guid(data);
+            ASCIIEncoding encoding = new ASCIIEncoding();
+            byte[] keyBytes = encoding.GetBytes(secret);
+            byte[] messageBytes = encoding.GetBytes(message);
+            HMACSHA512 cryptographer = new HMACSHA512(keyBytes);
+
+            byte[] bytes = cryptographer.ComputeHash(messageBytes);
+
+            return BitConverter.ToString(bytes).Replace("-", "").ToLower();
         }
     }
 }

@@ -1,6 +1,4 @@
-﻿using Dominio.Helper;
-using Dominio.Interfaces;
-using System;
+﻿using Dominio.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -10,7 +8,7 @@ namespace Dominio.Entidades
     {
         private List<IProvider> Providers = new List<IProvider>();
         private Dictionary<string, Moneda> Monedas { get; } = new Dictionary<string, Moneda>();
-        private HashSet<string[]> RelacionesEntreMonedas { get; } = new HashSet<string[]>();
+        private HashSet<string> RelacionesEntreMonedas { get; } = new HashSet<string>();
 
         public Mercado(List<IProvider> providers)
         {
@@ -29,9 +27,9 @@ namespace Dominio.Entidades
             }
         }
         
-        public List<Moneda> ObtenerOperacionOptima(string origen, string destino, decimal cantidad, out Guid ejecucion)
+        public List<Moneda> ObtenerOperacionOptima(string origen, string destino, decimal cantidad, out string ejecucion)
         {
-            ejecucion = (origen + destino).StringToGUID();
+            ejecucion = origen + destino;
             var monedaOrigen = Monedas[origen];
             var monedaDestino = Monedas[destino];
             monedaOrigen.SetCantidad(cantidad, ejecucion);
@@ -42,32 +40,18 @@ namespace Dominio.Entidades
 
             return Recorrido(monedaDestino, ejecucion);
         }
-        
-        public void EliminarOrdenes(List<Moneda> resultado)
-        {
-            //foreach(var moneda in resultado)
-            //{
-            //    if(moneda.OrdenesDeCompraMonedaAnterior != null)
-            //    {
-            //        foreach (var orden in moneda.OrdenesDeCompraMonedaAnterior)
-            //        {
-            //            orden.MonedaQueQuieroVender.OrdenesDeCompraPorMoneda[moneda].Remove(orden);
-            //        }
-            //    }
-            //}
-        }
 
-        public List<string[]> ObetenerRelacionesEntreMonedas()
+        public List<string> ObetenerRelacionesEntreMonedas()
         {
             return RelacionesEntreMonedas.ToList();
         }
-
+        
         public void AgregarRelacionEntreMonedas(string monedaNameA, string monedaNameB)
         {
             var monedaA = ObtenerMoneda(monedaNameA);
             var monedaB = ObtenerMoneda(monedaNameB);
 
-            RelacionesEntreMonedas.Add(new string[] { monedaNameA, monedaNameB });
+            RelacionesEntreMonedas.Add(monedaNameA + "_" + monedaNameB);
             monedaA.AgregarRelacionPorMoneda(monedaB);
             monedaB.AgregarRelacionPorMoneda(monedaA);
         }
@@ -96,8 +80,20 @@ namespace Dominio.Entidades
             }
             return retorno;
         }
+
+        public void EjecutarMovimientos(List<Moneda> movimientos, decimal inicial)
+        {
+            var cantidad = inicial;
+            for (var i = 0; i < movimientos.Count - 1; i++)
+            {
+                var actual = movimientos[i];
+                var siguiente = movimientos[i + 1];
+
+                cantidad = Providers[0].EjecutarMovimiento(actual, siguiente, cantidad);
+            }
+        }
         
-        private void RecorrerMercado(Queue<Moneda> stack, Moneda destino, Guid ejecucion)
+        private void RecorrerMercado(Queue<Moneda> stack, Moneda destino, string ejecucion)
         {
             while (stack.Any())
             {
@@ -125,7 +121,7 @@ namespace Dominio.Entidades
             }
         }
 
-        private List<Moneda> Recorrido(Moneda nodo, Guid ejecucion)
+        private List<Moneda> Recorrido(Moneda nodo, string ejecucion)
         {
             if (nodo.OrdenesDeCompraMonedaAnterior(ejecucion) == null || !nodo.OrdenesDeCompraMonedaAnterior(ejecucion).Any())
             {
