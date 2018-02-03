@@ -3,6 +3,7 @@ using Dominio.Interfaces;
 using Servicios;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -16,27 +17,30 @@ namespace ConsoleApp
             var mercado = new Mercado(providers);
             mercado.ActualizarOrdenes();
             var monedas = mercado.ObtenerMonedas();
-            System.Console.Write("Moneda Pilar: ");
-            var monedaPilar = System.Console.ReadLine();
+            //System.Console.Write("Moneda Pilar: ");
+            //var monedaPilar = System.Console.ReadLine();
+            var monedaPilar = "btc";
             System.Console.WriteLine("");
-            var inicial = 0.000105M;
-            var tasks = new List<Task>();
+            var inicial = 0.0001001M;
+
+            //var tasks = new List<Task>();
             foreach (var moneda in monedas)
             {
-                //ChequearMoneda(mercado, monedaPilar, inicial, moneda.Nombre);
-                tasks.Add(ChequearMoneda(mercado, monedaPilar, inicial, moneda.Nombre));
+                ChequearMoneda(mercado, monedaPilar, inicial, moneda.Nombre);
+
+                //    tasks.Add(ChequearMoneda(mercado, monedaPilar, inicial, moneda.Nombre));
             }
-            System.Console.WriteLine("Esperando");
-            Task.WaitAll(tasks.ToArray());
+            //System.Console.WriteLine("Esperando");
+            //Task.WaitAll(tasks.ToArray());
             System.Console.WriteLine("Fin");
             System.Console.ReadLine();
         }
 
-        private static async Task ChequearMoneda(Mercado mercado, string monedaPilar, decimal inicial, string monedaDestino)
-        //private static void ChequearMoneda(Mercado mercado, string monedaPilar, decimal inicial, string monedaDestino)
+        //private static async Task ChequearMoneda(Mercado mercado, string monedaPilar, decimal inicial, string monedaDestino)
+        private static void ChequearMoneda(Mercado mercado, string monedaPilar, decimal inicial, string monedaDestino)
         {
-            await Task.Run(() =>
-            {
+            //await Task.Run(() =>
+            //{
                 var movimientosIda = mercado.ObtenerOperacionOptima(monedaPilar, monedaDestino, inicial, out string ejecucionIda);
                 var cantidadDestino = movimientosIda.Last().Cantidad(ejecucionIda);
                 if (cantidadDestino > 0)
@@ -52,26 +56,26 @@ namespace ConsoleApp
                         todos.AddRange(movimientosVuelta);
                         var porcentaje = (((cantidadVuelta - inicial) * 100) / inicial);
                         var cantidadMovimientos = todos.Count - 1;
-                    //if (porcentaje > 4 && cantidadMovimientos <= 5)
-                    if (porcentaje > 4)
+                    if (porcentaje > 4 && cantidadMovimientos <= 5)
+                    //if (porcentaje > 4)
                     {
                             var texto = $"{(cantidadMovimientos).ToString("00")}|{porcentaje.ToString("00.00")}|";
 
                             foreach (var m in movimientosIda)
                             {
-                                texto += $"({m.Nombre}:{m.Cantidad(ejecucionIda)})";
+                                texto += $"({m.Nombre}:{m.Cantidad(ejecucionIda).ToString("F08", CultureInfo.InvariantCulture)})";
                             }
                             foreach (var m in movimientosVuelta)
                             {
-                                texto += $"({m.Nombre}:{m.Cantidad(ejecucionvuelta)})";
+                                texto += $"({m.Nombre}:{m.Cantidad(ejecucionvuelta).ToString("F08", CultureInfo.InvariantCulture)})";
                             }
                         System.Console.WriteLine(texto);
-                        //mercado.EjecutarMovimientos(todos, inicial);
+                        mercado.EjecutarMovimientos(todos, inicial);
                         System.Console.ReadLine();
                     }
                 }
                 };
-            });
+            //});
         }        
     }
 }

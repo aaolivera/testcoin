@@ -62,40 +62,49 @@ namespace Servicios
         {
             var ordenesNecesarias = ObtenerOrdenesNecesarias(actual, siguiente, inicial, out string relacion);
 
+            var cantidadResultado = 0M;
             foreach (var i in ordenesNecesarias)
             {
-                EjecutarOrden(i, relacion);
+                cantidadResultado += EjecutarOrden(i, relacion);
             }
             
             while (HayOrdenesActivas(relacion))
             {
                 Thread.Sleep(1500);
             }
-            return ConsultarSaldo(siguiente.Nombre);
+            //return ConsultarSaldo(siguiente.Nombre);
+            return cantidadResultado;
         }
 
         private decimal ConsultarSaldo(string moneda)
         {
             var body = $"method=getInfo&nonce={GenerateNonce()}";
+            //System.Console.WriteLine(body);
             dynamic response = PostPage(priv, body);
-
             var saldo = response == null || response["return"]["funds"][moneda] == null ? 0 : response["return"]["funds"][moneda].Value;
+            //System.Console.WriteLine("=>Saldo:" + saldo.ToString());
             return decimal.Parse(saldo.ToString(), NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint);
         }
 
         private bool HayOrdenesActivas(string relacion)
         {
             var body = $"method=ActiveOrders&pair={relacion}&nonce={GenerateNonce()}";
+            //System.Console.WriteLine(body);
             dynamic response = PostPage(priv, body);
-            
-            return (response != null && response["return"] != null);
+            var resultado = (response != null && response["return"] != null);
+            //System.Console.WriteLine("=>" + resultado);
+            return resultado;
         }
 
-        private void EjecutarOrden(Orden i, string relacion)
+        private decimal EjecutarOrden(Orden i, string relacion)
         {
             var body = $"method=Trade&pair={relacion}&type={(i.EsDeVenta ? "buy" : "sell")}&rate={i.PrecioUnitario.ToString("0.########", CultureInfo.InvariantCulture)}&amount={i.Cantidad.ToString("0.########", CultureInfo.InvariantCulture)}&nonce={GenerateNonce()}";
-
-            dynamic response = PostPage(priv, body);
+            System.Console.WriteLine(body);
+            System.Console.WriteLine("https://yobit.net/en/trade/" + relacion.Replace('_', '/').ToUpper());
+            /////////////////////////////////////////////////////////////////////////////////////
+            return i.EsDeVenta ? i.Cantidad : (i.Cantidad * i.PrecioUnitario) - 0.02M / 100 * (i.Cantidad * i.PrecioUnitario);
+            //////////////////////////////////////////////////////////////////////////////////////
+            //PostPage(priv, body);
         }
 
         private List<Orden> ObtenerOrdenesNecesarias(Moneda actual, Moneda siguiente, decimal inicial, out string relacion)

@@ -25,13 +25,10 @@ namespace ConsoleAppCaminoOptimo
                 var desde = System.Console.ReadLine();
                 System.Console.Write("-Hasta:");
                 var hasta = System.Console.ReadLine();
-                for (var i = 0; i < 4; i++)
-                {
-                    var cantidad = 1M;
-                    cantidad = ObtenerOperacion(mercado, desde, hasta, cantidad);
-                    ObtenerOperacion(mercado, hasta, desde, cantidad);
-                    System.Console.Write("Fin");
-                }
+                var cantidad = 160M;
+                cantidad = ObtenerOperacion(mercado, desde, hasta, cantidad);
+                ObtenerOperacion(mercado, hasta, desde, cantidad);
+                System.Console.Write("Fin");
                 System.Console.ReadLine();
             }
         }
