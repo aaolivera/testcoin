@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Servicios {
+namespace Providers {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
@@ -25,7 +25,7 @@ namespace Servicios {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("4")]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
         public int Nonce {
             get {
                 return ((int)(this["Nonce"]));

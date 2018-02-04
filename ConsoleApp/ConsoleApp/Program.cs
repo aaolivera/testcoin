@@ -1,7 +1,6 @@
 ﻿using Dominio.Entidades;
 using Dominio.Interfaces;
-using Servicios;
-using System;
+using Providers;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -13,34 +12,41 @@ namespace ConsoleApp
     {
         static void Main(string[] args)
         {
-            var providers = new List<IProvider> { new YobitProvider() };
-            var mercado = new Mercado(providers);
-            mercado.ActualizarOrdenes();
-            var monedas = mercado.ObtenerMonedas();
-            //System.Console.Write("Moneda Pilar: ");
-            //var monedaPilar = System.Console.ReadLine();
-            var monedaPilar = "btc";
-            System.Console.WriteLine("");
-            var inicial = 0.0001001M;
-
-            //var tasks = new List<Task>();
-            foreach (var moneda in monedas)
+            while (true)
             {
-                ChequearMoneda(mercado, monedaPilar, inicial, moneda.Nombre);
+                var providers = new List<IProvider> { new YobitProvider() };
+                var mercado = new Mercado(providers);
+                mercado.ActualizarOrdenes();
+                var monedas = mercado.ObtenerMonedas();
+                var monedaPilar = "btc";
 
-                //    tasks.Add(ChequearMoneda(mercado, monedaPilar, inicial, moneda.Nombre));
+                System.Console.WriteLine("");
+                var inicial = 0.0001001M;
+
+                var tasks = new List<Task>();
+                foreach (var moneda in monedas)
+                {
+                    ChequearMoneda(mercado, monedaPilar, inicial, moneda.Nombre);
+
+                    //tasks.Add(ChequearMonedaAsync(mercado, monedaPilar, inicial, moneda.Nombre));
+                }
+                System.Console.WriteLine("Buscando...");
+                Task.WaitAll(tasks.ToArray());
+                System.Console.WriteLine("Fin");
+                System.Console.ReadLine();
             }
-            //System.Console.WriteLine("Esperando");
-            //Task.WaitAll(tasks.ToArray());
-            System.Console.WriteLine("Fin");
-            System.Console.ReadLine();
         }
 
-        //private static async Task ChequearMoneda(Mercado mercado, string monedaPilar, decimal inicial, string monedaDestino)
-        private static void ChequearMoneda(Mercado mercado, string monedaPilar, decimal inicial, string monedaDestino)
+        private static async Task ChequearMonedaAsync(Mercado mercado, string monedaPilar, decimal inicial, string monedaDestino)
         {
-            //await Task.Run(() =>
-            //{
+            await Task.Run(() =>
+            {
+                ChequearMoneda(mercado, monedaPilar, inicial, monedaDestino);
+            });
+        }
+        
+        private static void ChequearMoneda(Mercado mercado, string monedaPilar, decimal inicial, string monedaDestino)
+            {
                 var movimientosIda = mercado.ObtenerOperacionOptima(monedaPilar, monedaDestino, inicial, out string ejecucionIda);
                 var cantidadDestino = movimientosIda.Last().Cantidad(ejecucionIda);
                 if (cantidadDestino > 0)
@@ -56,9 +62,8 @@ namespace ConsoleApp
                         todos.AddRange(movimientosVuelta);
                         var porcentaje = (((cantidadVuelta - inicial) * 100) / inicial);
                         var cantidadMovimientos = todos.Count - 1;
-                    if (porcentaje > 4 && cantidadMovimientos <= 5)
-                    //if (porcentaje > 4)
-                    {
+                        if (porcentaje > 6 && cantidadMovimientos <= 4)
+                        {
                             var texto = $"{(cantidadMovimientos).ToString("00")}|{porcentaje.ToString("00.00")}|";
 
                             foreach (var m in movimientosIda)
@@ -69,13 +74,14 @@ namespace ConsoleApp
                             {
                                 texto += $"({m.Nombre}:{m.Cantidad(ejecucionvuelta).ToString("F08", CultureInfo.InvariantCulture)})";
                             }
-                        System.Console.WriteLine(texto);
+                            System.Console.WriteLine("////////////////////////////////////////////////////////////////");
+                            System.Console.WriteLine(texto);
                         mercado.EjecutarMovimientos(todos, inicial);
+                        System.Console.WriteLine("////////////////////////////////////////////////////////////////");
                         System.Console.ReadLine();
                     }
                 }
                 };
-            //});
         }        
     }
 }

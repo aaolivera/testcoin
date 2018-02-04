@@ -4,35 +4,35 @@ using Dominio.Interfaces;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
-using System.Configuration;
 using System.Globalization;
 
-namespace Servicios
+namespace Providers
 {
     public class YobitProvider : IProvider
     {
         private readonly string info = @"https://yobit.net/api/3/info";
-        private readonly string depth = @"https://yobit.net/api/3/depth/{0}?filter=10&ignore_invalid=1";
+        private readonly string depth = @"https://yobit.net/api/3/depth/{0}?ignore_invalid=1";
         private readonly string priv = @"https://yobit.net/tapi/";
-
+        
         public void CargarOrdenes(Mercado mercado)
         {
             var relaciones = mercado.ObetenerRelacionesEntreMonedas();
             var page = string.Empty;
-            var n = 0;
+            
+            //Armo Urls de paginas
+            var paginas = new List<string>();
             foreach(var i in relaciones)
             {
-                n++;
                 if (page.Length + i.Length > 510)
                 {
-                    System.Console.WriteLine($"{n}/{relaciones.Count()} Obteniendo operaciones");
-                    CargarOrdenesPagina(page, mercado);
+                    paginas.Add(string.Format(depth, page));
+                    page = i;
+                }
+                else if (page.Length == 0)
+                {
                     page = i;
                 }
                 else
@@ -42,14 +42,20 @@ namespace Servicios
             }
             if (!string.IsNullOrEmpty(page))
             {
-                System.Console.WriteLine($"{n}/{relaciones.Count()} Obteniendo operaciones");
-                CargarOrdenesPagina(page, mercado);                
+                paginas.Add(string.Format(depth, page));
+            }
+            
+            //Obtengo y cargo       
+            var responses = WebProvider.DownloadPages(paginas).Result;
+            foreach(var response in responses)
+            {
+                CargarPaginaDeOrdenes(response, mercado);
             }
         }
         
         public void CargarMonedas(Mercado mercado)
         {
-            dynamic response = DownloadPage(info);
+            dynamic response = WebProvider.DownloadPage(info);
             
             foreach (var relacion in response.pairs)
             {
@@ -63,47 +69,46 @@ namespace Servicios
             var ordenesNecesarias = ObtenerOrdenesNecesarias(actual, siguiente, inicial, out string relacion);
 
             var cantidadResultado = 0M;
+            System.Console.WriteLine("https://yobit.net/en/trade/" + relacion.Replace('_', '/').ToUpper());
             foreach (var i in ordenesNecesarias)
             {
-                cantidadResultado += EjecutarOrden(i, relacion);
+                cantidadResultado +=
+                EjecutarOrden(i, relacion);
             }
-            
-            while (HayOrdenesActivas(relacion))
-            {
-                Thread.Sleep(1500);
-            }
+
+            //while (HayOrdenesActivas(relacion))
+            //{
+            //    Thread.Sleep(1500);
+            //}
             //return ConsultarSaldo(siguiente.Nombre);
             return cantidadResultado;
         }
 
-        private decimal ConsultarSaldo(string moneda)
+        public decimal ConsultarSaldo(string moneda)
         {
-            var body = $"method=getInfo&nonce={GenerateNonce()}";
-            //System.Console.WriteLine(body);
+            var body = "method=getInfo&nonce={0}";
             dynamic response = PostPage(priv, body);
             var saldo = response == null || response["return"]["funds"][moneda] == null ? 0 : response["return"]["funds"][moneda].Value;
-            //System.Console.WriteLine("=>Saldo:" + saldo.ToString());
             return decimal.Parse(saldo.ToString(), NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint);
         }
 
-        private bool HayOrdenesActivas(string relacion)
+        public bool HayOrdenesActivas(string relacion)
         {
-            var body = $"method=ActiveOrders&pair={relacion}&nonce={GenerateNonce()}";
-            //System.Console.WriteLine(body);
+            var body = $"method=ActiveOrders&pair={relacion}&nonce={{0}}";
             dynamic response = PostPage(priv, body);
             var resultado = (response != null && response["return"] != null);
-            //System.Console.WriteLine("=>" + resultado);
             return resultado;
         }
 
         private decimal EjecutarOrden(Orden i, string relacion)
+        //private void EjecutarOrden(Orden i, string relacion)
         {
-            var body = $"method=Trade&pair={relacion}&type={(i.EsDeVenta ? "buy" : "sell")}&rate={i.PrecioUnitario.ToString("0.########", CultureInfo.InvariantCulture)}&amount={i.Cantidad.ToString("0.########", CultureInfo.InvariantCulture)}&nonce={GenerateNonce()}";
+            var body = $"method=Trade&pair={relacion}&type={(i.EsDeVenta ? "buy" : "sell")}&rate={i.PrecioUnitario.ToString("0.########", CultureInfo.InvariantCulture)}&amount={i.Cantidad.ToString("0.########", CultureInfo.InvariantCulture)}&nonce={{0}}";
             System.Console.WriteLine(body);
-            System.Console.WriteLine("https://yobit.net/en/trade/" + relacion.Replace('_', '/').ToUpper());
-            /////////////////////////////////////////////////////////////////////////////////////
+            
+            ///////////////////////////////////////////////////////////////////////////////////
             return i.EsDeVenta ? i.Cantidad : (i.Cantidad * i.PrecioUnitario) - 0.02M / 100 * (i.Cantidad * i.PrecioUnitario);
-            //////////////////////////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////////////////////////
             //PostPage(priv, body);
         }
 
@@ -164,7 +169,7 @@ namespace Servicios
         {
             var url = string.Format(depth, $"{actual.Nombre}_{siguiente.Nombre}-{siguiente.Nombre}_{actual.Nombre}");
             relacion = string.Empty;
-            var response = DownloadPage(url);
+            var response = WebProvider.DownloadPage(url);
             var resultado = new List<Orden>();
             foreach (var ordenesPorMoneda in response)
             {
@@ -205,14 +210,7 @@ namespace Servicios
             }
             return resultado;
         }
-
-        private void CargarOrdenesPagina(string page, Mercado mercado)
-        {
-            var url = string.Format(depth, page);
-            var response = DownloadPage(url);
-            CargarPaginaDeOrdenes(response, mercado);
-        }
-
+        
         private void CargarPaginaDeOrdenes(dynamic response, Mercado mercado)
         {
             foreach (var ordenesPorMoneda in response)
@@ -245,50 +243,24 @@ namespace Servicios
         {
             try
             {
-                Thread.Sleep(1500);
-
+                body = string.Format(body, GenerateNonce());
+                var key = "5CC899948F302E4ED63A97472A379785";
+                var secret = "24e43497e472c44eba6bb63ffc830046";
                 var headers = new Dictionary<string, string>
                 {
                     {"Content-Type", "application/x-www-form-urlencoded" },
-                    {"Key", "CCCFCF17F223DC5862A4B6135186EFAD" },
-                    {"Sign", body.HmacShaDigest("ad242c9ceb5ad5debdf420c267f828c8") }
+                    {"Key", key },
+                    {"Sign", body.HmacShaDigest(secret) }
                 };
-
-                var cliente = new WebClient();
-                foreach (var i in headers.Keys)
-                {
-                    cliente.Headers.Add(i, headers[i]);
-                }
-                var response = cliente.UploadString(url, body);
-                dynamic dinamic = JsonConvert.DeserializeObject(response);
-                if (dinamic["success"] != 1)
-                {
-                    throw new Exception(dinamic["error"]);
-                }
-                return dinamic;
+                return WebProvider.PostPage(url, body, headers);
             }
             catch (Exception e)
             {
                 return PostPage(url, body);
             }
         }
-
-        private static dynamic DownloadPage(string url, Dictionary<string, string> header = null, string body = null)
-        {
-            try
-            {
-                Thread.Sleep(1400);
-                var cliente = new WebClient();
-                var response = cliente.DownloadString(url);
-                return JsonConvert.DeserializeObject(response);
-            }
-            catch (Exception e)
-            {
-                return DownloadPage(url);
-            }
-        }
-
-        public string GenerateNonce()
+        
+        public static string GenerateNonce()
         {
             var value = Convert.ToInt32(Settings.Default["Nonce"]);
             value++;

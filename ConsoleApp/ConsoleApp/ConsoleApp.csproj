@@ -56,9 +56,9 @@
       <Project>{805C2F55-D16E-4963-AE80-A0ED4C43ADD4}</Project>
       <Name>Dominio</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Servicios\Servicios.csproj">
+    <ProjectReference Include="..\Servicios\Providers.csproj">
       <Project>{afdb065c-eeaf-48c9-9b1d-7dc6cd082dd7}</Project>
-      <Name>Servicios</Name>
+      <Name>Providers</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

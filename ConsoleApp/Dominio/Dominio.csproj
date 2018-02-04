@@ -44,6 +44,10 @@
     <Compile Include="Entidades\Mercado.cs" />
     <Compile Include="Entidades\Orden.cs" />
     <Compile Include="Entidades\Moneda.cs" />
+    <Compile Include="Helper\MyWebClient.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Helper\NavigationList.cs" />
     <Compile Include="Helper\StringExt.cs" />
     <Compile Include="Helper\ListExt.cs" />
     <Compile Include="Interfaces\IProvider.cs" />

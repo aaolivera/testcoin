@@ -1,11 +1,7 @@
 ﻿using Dominio.Entidades;
 using Dominio.Interfaces;
-using Servicios;
-using System;
+using Providers;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ConsoleAppCaminoOptimo
 {
@@ -25,7 +21,7 @@ namespace ConsoleAppCaminoOptimo
                 var desde = System.Console.ReadLine();
                 System.Console.Write("-Hasta:");
                 var hasta = System.Console.ReadLine();
-                var cantidad = 160M;
+                var cantidad = 15.91M;
                 cantidad = ObtenerOperacion(mercado, desde, hasta, cantidad);
                 ObtenerOperacion(mercado, hasta, desde, cantidad);
                 System.Console.Write("Fin");
