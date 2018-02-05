@@ -50,7 +50,6 @@ namespace Providers
             try
             {
                 var cliente = new MyWebClient();
-
                 var response = cliente.DownloadString(url);
                 return JsonConvert.DeserializeObject(response);
             }

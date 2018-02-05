@@ -1,4 +1,5 @@
 ﻿using Dominio.Entidades;
+using System.Collections.Generic;
 
 namespace Dominio.Interfaces
 {
@@ -6,6 +7,9 @@ namespace Dominio.Interfaces
     {
         void CargarMonedas(Mercado mercado);
         void CargarOrdenes(Mercado mercado);
-        decimal EjecutarMovimiento(Moneda actual, Moneda siguiente, decimal inicial);
+        List<Orden> ObtenerOrdenesNecesarias(Moneda actual, Moneda siguiente, decimal inicial, out string relacion);
+        decimal EjecutarOrden(Orden i, string relacion);
+        decimal ConsultarSaldo(string moneda);
+        bool HayOrdenesActivas(string relacion);
     }
 }

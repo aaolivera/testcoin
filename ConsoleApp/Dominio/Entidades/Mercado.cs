@@ -1,6 +1,7 @@
 ﻿using Dominio.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace Dominio.Entidades
 {
@@ -84,12 +85,28 @@ namespace Dominio.Entidades
         public void EjecutarMovimientos(List<Moneda> movimientos, decimal inicial)
         {
             var cantidad = inicial;
+            var provider = Providers[0];
             for (var i = 0; i < movimientos.Count - 1; i++)
             {
                 var actual = movimientos[i];
                 var siguiente = movimientos[i + 1];
 
-                cantidad = Providers[0].EjecutarMovimiento(actual, siguiente, cantidad);
+                var ordenesNecesarias = provider.ObtenerOrdenesNecesarias(actual, siguiente, cantidad, out string relacion);
+
+                var cantidadResultado = 0M;
+                System.Console.WriteLine("https://yobit.net/en/trade/" + relacion.Replace('_', '/').ToUpper());
+                foreach (var orden in ordenesNecesarias)
+                {
+                    cantidadResultado += provider.EjecutarOrden(orden, relacion);
+                }
+
+                while (provider.HayOrdenesActivas(relacion))
+                {
+                    Thread.Sleep(1500);
+                }
+
+                //cantidad = provider.ConsultarSaldo(siguiente.Nombre);
+                cantidad = cantidadResultado;
             }
         }
         
