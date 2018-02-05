@@ -107,7 +107,7 @@ namespace Providers
             System.Console.WriteLine(body);
             
             ///////////////////////////////////////////////////////////////////////////////////
-            return i.EsDeVenta ? i.Cantidad : (i.Cantidad * i.PrecioUnitario) - 0.02M / 100 * (i.Cantidad * i.PrecioUnitario);
+            return i.EsDeVenta ? i.Cantidad : ((i.Cantidad * i.PrecioUnitario) - (0.02M / 100 * (i.Cantidad * i.PrecioUnitario)));
             ////////////////////////////////////////////////////////////////////////////////////
             //PostPage(priv, body);
         }
@@ -116,49 +116,52 @@ namespace Providers
         {
             var ordenesActivas = ObtenerOrdenesActivas(actual, siguiente, out relacion);
             var ordenesNecesarias = new List<Orden>();
+            
             var cantidadActual = 0M;
 
             foreach (var orden in ordenesActivas)
             {
                 if (orden.EsDeVenta)
                 {
-                    var cantidadAComprar = 0M;
-                    var cantidadDestino = orden.Cantidad * orden.PrecioUnitario;
-                    var inicialSinComision = inicial - 0.02M / 100 * inicial;
-                    if (cantidadActual + cantidadDestino < inicialSinComision)
+                    var cantidadActualQuePuedoGastar = inicial - 0.02M / 100 * inicial;
+                    var cantidadActualAgastarEnEstaOrden = 0M;
+                    var cantidadActualDeLaOrden = orden.Cantidad * orden.PrecioUnitario;
+                    
+                    if (cantidadActual + cantidadActualDeLaOrden < cantidadActualQuePuedoGastar)
                     {
-                        cantidadAComprar = cantidadDestino;
+                        cantidadActualAgastarEnEstaOrden = cantidadActualDeLaOrden;
                     }
-                    else if (cantidadActual + cantidadDestino > inicialSinComision)
+                    else if (cantidadActual + cantidadActualDeLaOrden > cantidadActualQuePuedoGastar)
                     {
-                        cantidadAComprar = (inicialSinComision - cantidadActual);
-                        if (cantidadAComprar == 0) break;
+                        //OJO, aca puedo estar intentando emitir una orden muy chica
+                        cantidadActualAgastarEnEstaOrden = (cantidadActualQuePuedoGastar - cantidadActual);
+                        if (cantidadActualAgastarEnEstaOrden == 0) break;
                     }
                     else
                     {
                         break;
                     }
-                    orden.Cantidad = cantidadAComprar / orden.PrecioUnitario;
-                    cantidadActual += cantidadAComprar;
+                    orden.Cantidad = cantidadActualAgastarEnEstaOrden / orden.PrecioUnitario;
+                    cantidadActual += cantidadActualAgastarEnEstaOrden;
                 }
                 else
                 {
-                    var cantidadAVender = 0M;
+                    var cantidadActualAVender = 0M;
                     if (cantidadActual + orden.Cantidad < inicial)
                     {
-                        cantidadAVender = orden.Cantidad;
+                        cantidadActualAVender = orden.Cantidad;
                     }
                     else if (cantidadActual + orden.Cantidad > inicial)
                     {
-                        cantidadAVender = (inicial - cantidadActual);
-                        if (cantidadAVender == 0) break;
+                        cantidadActualAVender = (inicial - cantidadActual);
+                        if (cantidadActualAVender == 0) break;
                     }
                     else
                     {
                         break;
                     }
-                    orden.Cantidad = cantidadAVender;
-                    cantidadActual += cantidadAVender;
+                    orden.Cantidad = cantidadActualAVender;
+                    cantidadActual += cantidadActualAVender;
                 }
                 ordenesNecesarias.Add(orden);
             }
