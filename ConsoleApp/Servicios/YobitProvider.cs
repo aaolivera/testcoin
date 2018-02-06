@@ -1,12 +1,8 @@
 ﻿using Dominio.Entidades;
 using Dominio.Helper;
 using Dominio.Interfaces;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading;
 using System.Globalization;
 
 namespace Providers
@@ -56,32 +52,13 @@ namespace Providers
         public void CargarMonedas(Mercado mercado)
         {
             dynamic response = WebProvider.DownloadPage(info);
-            
+
+
             foreach (var relacion in response.pairs)
             {
                 var monedas = relacion.Name.Split('_');
                 mercado.AgregarRelacionEntreMonedas(monedas[0], monedas[1]);
             }
-        }
-
-        public decimal EjecutarMovimiento(Moneda actual, Moneda siguiente, decimal inicial)
-        {
-            var ordenesNecesarias = ObtenerOrdenesNecesarias(actual, siguiente, inicial, out string relacion);
-
-            var cantidadResultado = 0M;
-            System.Console.WriteLine("https://yobit.net/en/trade/" + relacion.Replace('_', '/').ToUpper());
-            foreach (var i in ordenesNecesarias)
-            {
-                cantidadResultado +=
-                EjecutarOrden(i, relacion);
-            }
-
-            //while (HayOrdenesActivas(relacion))
-            //{
-            //    Thread.Sleep(1500);
-            //}
-            //return ConsultarSaldo(siguiente.Nombre);
-            return cantidadResultado;
         }
 
         public decimal ConsultarSaldo(string moneda)
@@ -100,19 +77,17 @@ namespace Providers
             return resultado;
         }
 
-        private decimal EjecutarOrden(Orden i, string relacion)
+        public decimal EjecutarOrden(Orden i, string relacion)
         //private void EjecutarOrden(Orden i, string relacion)
         {
             var body = $"method=Trade&pair={relacion}&type={(i.EsDeVenta ? "buy" : "sell")}&rate={i.PrecioUnitario.ToString("0.########", CultureInfo.InvariantCulture)}&amount={i.Cantidad.ToString("0.########", CultureInfo.InvariantCulture)}&nonce={{0}}";
             System.Console.WriteLine(body);
-            PostPage(priv, body);
-            ///////////////////////////////////////////////////////////////////////////////////
+            //PostPage(priv, body);
             return i.EsDeVenta ? i.Cantidad : ((i.Cantidad * i.PrecioUnitario) - (0.02M / 100 * (i.Cantidad * i.PrecioUnitario)));
-            ////////////////////////////////////////////////////////////////////////////////////
             
         }
 
-        private List<Orden> ObtenerOrdenesNecesarias(Moneda actual, Moneda siguiente, decimal inicial, out string relacion)
+        public List<Orden> ObtenerOrdenesNecesarias(Moneda actual, Moneda siguiente, decimal inicial, out string relacion)
         {
             var ordenesActivas = ObtenerOrdenesActivas(actual, siguiente, out relacion);
             var ordenesNecesarias = new List<Orden>();
