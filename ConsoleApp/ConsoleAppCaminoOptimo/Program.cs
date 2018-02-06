@@ -21,7 +21,7 @@ namespace ConsoleAppCaminoOptimo
                 var desde = System.Console.ReadLine();
                 System.Console.Write("-Hasta:");
                 var hasta = System.Console.ReadLine();
-                var cantidad = 15.91M;
+                var cantidad = 46.77M;
                 cantidad = ObtenerOperacion(mercado, desde, hasta, cantidad);
                 ObtenerOperacion(mercado, hasta, desde, cantidad);
                 System.Console.Write("Fin");

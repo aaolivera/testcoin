@@ -12,6 +12,10 @@ namespace ConsoleApp
     {
         static void Main(string[] args)
         {
+            var r = new YobitProvider().ConsultarSaldo("edr2");
+            new YobitProvider().EjecutarMovimiento(new Moneda("edr2"), new Moneda( "ltc"), 46.77570093M);
+
+
             while (true)
             {
                 var providers = new List<IProvider> { new YobitProvider() };

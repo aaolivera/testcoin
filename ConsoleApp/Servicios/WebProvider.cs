@@ -1,10 +1,13 @@
-﻿using Dominio.Helper;
+﻿using CloudFlareUtilities;
+using Dominio.Helper;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -31,13 +34,22 @@ namespace Providers
         {
             Thread.Sleep(1500);
 
-            var cliente = new MyWebClient();
+            var handler = new ClearanceHandler
+            {
+                MaxRetries = 2
+            };
+            var client = new HttpClient(handler);
+            HttpContent queryString = new StringContent(body);
+            queryString.Headers.Clear();
             foreach (var i in headers.Keys)
             {
-                cliente.Headers.Add(i, headers[i]);
+                queryString.Headers.Add(i, headers[i]);
             }
-            var response = cliente.UploadString(url, body);
-            dynamic dinamic = JsonConvert.DeserializeObject(response);
+            HttpResponseMessage response = client.PostAsync(url, queryString).Result;
+            var result = response.Content.ReadAsByteArrayAsync().Result;
+            var responseStr = Encoding.UTF8.GetString(result);
+            
+            dynamic dinamic = JsonConvert.DeserializeObject(responseStr);
             if (dinamic["success"] != 1)
             {
                 throw new Exception(dinamic["error"]);
@@ -49,10 +61,17 @@ namespace Providers
         {
             try
             {
-                var cliente = new MyWebClient();
-
-                var response = cliente.DownloadString(url);
-                return JsonConvert.DeserializeObject(response);
+                var handler = new ClearanceHandler
+                {
+                    MaxRetries = 2
+                };
+                var client = new HttpClient(handler);
+                HttpResponseMessage response = client.GetAsync(url).Result;
+                response.EnsureSuccessStatusCode();
+                var result = response.Content.ReadAsByteArrayAsync().Result;
+                var responseStr =  Encoding.UTF8.GetString(result);
+                
+                return JsonConvert.DeserializeObject(responseStr);
             }
             catch (Exception e)
             {

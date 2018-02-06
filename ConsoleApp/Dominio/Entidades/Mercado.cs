@@ -29,9 +29,9 @@ namespace Dominio.Entidades
         
         public List<Moneda> ObtenerOperacionOptima(string origen, string destino, decimal cantidad, out string ejecucion)
         {
-            ejecucion = origen + destino;
-            var monedaOrigen = Monedas[origen];
-            var monedaDestino = Monedas[destino];
+            ejecucion = (origen + destino).ToLower();
+            var monedaOrigen = Monedas[origen.ToLower()];
+            var monedaDestino = Monedas[destino.ToLower()];
             monedaOrigen.SetCantidad(cantidad, ejecucion);
 
             var stack = new Queue<Moneda>();

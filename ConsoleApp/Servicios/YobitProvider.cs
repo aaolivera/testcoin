@@ -105,11 +105,11 @@ namespace Providers
         {
             var body = $"method=Trade&pair={relacion}&type={(i.EsDeVenta ? "buy" : "sell")}&rate={i.PrecioUnitario.ToString("0.########", CultureInfo.InvariantCulture)}&amount={i.Cantidad.ToString("0.########", CultureInfo.InvariantCulture)}&nonce={{0}}";
             System.Console.WriteLine(body);
-            
+            PostPage(priv, body);
             ///////////////////////////////////////////////////////////////////////////////////
             return i.EsDeVenta ? i.Cantidad : ((i.Cantidad * i.PrecioUnitario) - (0.02M / 100 * (i.Cantidad * i.PrecioUnitario)));
             ////////////////////////////////////////////////////////////////////////////////////
-            //PostPage(priv, body);
+            
         }
 
         private List<Orden> ObtenerOrdenesNecesarias(Moneda actual, Moneda siguiente, decimal inicial, out string relacion)
@@ -247,8 +247,8 @@ namespace Providers
             try
             {
                 body = string.Format(body, GenerateNonce());
-                var key = "5CC899948F302E4ED63A97472A379785";
-                var secret = "24e43497e472c44eba6bb63ffc830046";
+                var key = "3BE490E44CD07B641608DD5574DB5B00";
+                var secret = "ff02c6aa3163f430ba7de4e533d16564";
                 var headers = new Dictionary<string, string>
                 {
                     {"Content-Type", "application/x-www-form-urlencoded" },
