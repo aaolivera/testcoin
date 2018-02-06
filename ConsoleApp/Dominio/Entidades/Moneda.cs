@@ -53,7 +53,7 @@ namespace Dominio.Entidades
                 ordenesDecompraNecesarias.Add(orden);
             }
             
-            cantidadDestino = cantidadDestino - 0.02M / 100 * cantidadDestino;
+            cantidadDestino = cantidadDestino - 0.2M / 100 * cantidadDestino;
 
             if (cantidadOrigen == Cantidad(ejecucion) && monedaDestino.Cantidad(ejecucion) < cantidadDestino)
             {

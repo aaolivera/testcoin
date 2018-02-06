@@ -78,12 +78,11 @@ namespace Providers
         }
 
         public decimal EjecutarOrden(Orden i, string relacion)
-        //private void EjecutarOrden(Orden i, string relacion)
         {
             var body = $"method=Trade&pair={relacion}&type={(i.EsDeVenta ? "buy" : "sell")}&rate={i.PrecioUnitario.ToString("0.########", CultureInfo.InvariantCulture)}&amount={i.Cantidad.ToString("0.########", CultureInfo.InvariantCulture)}&nonce={{0}}";
             System.Console.WriteLine(body);
-            //PostPage(priv, body);
-            return i.EsDeVenta ? i.Cantidad : ((i.Cantidad * i.PrecioUnitario) - (0.02M / 100 * (i.Cantidad * i.PrecioUnitario)));
+            PostPage(priv, body);
+            return i.EsDeVenta ? i.Cantidad : Decimal.Round((i.Cantidad * i.PrecioUnitario) - (0.2M / 100 * (i.Cantidad * i.PrecioUnitario)));
             
         }
 
@@ -98,9 +97,9 @@ namespace Providers
             {
                 if (orden.EsDeVenta)
                 {
-                    var cantidadActualQuePuedoGastar = inicial - 0.02M / 100 * inicial;
+                    var cantidadActualQuePuedoGastar = Decimal.Round((inicial - 0.2M / 100 * inicial), 8, MidpointRounding.ToEven);
                     var cantidadActualAgastarEnEstaOrden = 0M;
-                    var cantidadActualDeLaOrden = orden.Cantidad * orden.PrecioUnitario;
+                    var cantidadActualDeLaOrden = Decimal.Round(orden.Cantidad * orden.PrecioUnitario, 8, MidpointRounding.ToEven);
                     
                     if (cantidadActual + cantidadActualDeLaOrden < cantidadActualQuePuedoGastar)
                     {
@@ -116,7 +115,7 @@ namespace Providers
                     {
                         break;
                     }
-                    orden.Cantidad = cantidadActualAgastarEnEstaOrden / orden.PrecioUnitario;
+                    orden.Cantidad = Decimal.Round(cantidadActualAgastarEnEstaOrden / orden.PrecioUnitario, 8, MidpointRounding.ToEven);
                     cantidadActual += cantidadActualAgastarEnEstaOrden;
                 }
                 else
@@ -194,6 +193,7 @@ namespace Providers
             foreach (var ordenesPorMoneda in response)
             {
                 var monedas = ordenesPorMoneda.Name.Split('_');
+                if (ordenesPorMoneda.Name == "edr2_ltc") continue;
                 var ventas = ordenesPorMoneda.Value["asks"];
                 var compras = ordenesPorMoneda.Value["bids"];
 

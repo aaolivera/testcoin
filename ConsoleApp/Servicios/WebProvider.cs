@@ -32,8 +32,6 @@ namespace Providers
 
         public static dynamic PostPage(string url, string body, Dictionary<string, string> headers)
         {
-            Thread.Sleep(1500);
-
             var handler = new ClearanceHandler
             {
                 MaxRetries = 2
@@ -125,13 +123,11 @@ namespace Providers
             {
                 Console.WriteLine($"Inicio {urls.Count} - {proxy} Obteniendo operaciones");
                 var retorno = new Bloque();
-                var sleep = 500;
                 var n = 0;
                 try
                 {
                     foreach (var url in urls)
                     {
-                        Thread.Sleep(sleep);
                         if (proxy == "local")
                         {
                             retorno.PaginasDescargadas.Add(DownloadPage(url));
