@@ -21,7 +21,7 @@ namespace ConsoleApp
                 var monedaPilar = "btc";
 
                 System.Console.WriteLine("");
-                var inicial = 0.0001001M;
+                var inicial = 0.0001002M;
 
                 var tasks = new List<Task>();
                 foreach (var moneda in monedas)

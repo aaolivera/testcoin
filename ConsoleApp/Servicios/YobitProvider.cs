@@ -221,16 +221,16 @@ namespace Providers
         {
             try
             {
-                body = string.Format(body, GenerateNonce());
-                var key = "3BE490E44CD07B641608DD5574DB5B00";
-                var secret = "ff02c6aa3163f430ba7de4e533d16564";
+                var bodyNonce = string.Format(body, GenerateNonce());
+                var key = "D9840F8C5CBA7A19BD2E7EFD79140F0F";
+                var secret = "f796a8118682696bb0efe51cb5bb802e";
                 var headers = new Dictionary<string, string>
                 {
                     {"Content-Type", "application/x-www-form-urlencoded" },
                     {"Key", key },
-                    {"Sign", body.HmacShaDigest(secret) }
+                    {"Sign", bodyNonce.HmacShaDigest(secret) }
                 };
-                return WebProvider.PostPage(url, body, headers);
+                return WebProvider.PostPage(url, bodyNonce, headers);
             }
             catch (Exception e)
             {

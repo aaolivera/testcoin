@@ -105,7 +105,7 @@ namespace Dominio.Entidades
                     Thread.Sleep(1500);
                 }
 
-                //cantidad = provider.ConsultarSaldo(siguiente.Nombre);
+                cantidad = provider.ConsultarSaldo(siguiente.Nombre);
                 cantidad = cantidadResultado;
             }
         }
