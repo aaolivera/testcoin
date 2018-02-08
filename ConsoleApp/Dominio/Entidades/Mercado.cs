@@ -9,7 +9,7 @@ namespace Dominio.Entidades
     {
         private List<IProvider> Providers = new List<IProvider>();
         private Dictionary<string, Moneda> Monedas { get; } = new Dictionary<string, Moneda>();
-        private HashSet<string> RelacionesEntreMonedas { get; } = new HashSet<string>();
+        private Dictionary<string, Relacion> RelacionesEntreMonedas { get; } = new Dictionary<string, Relacion>();
 
         public Mercado(List<IProvider> providers)
         {
@@ -20,7 +20,19 @@ namespace Dominio.Entidades
             }
         }
 
-        public void ActualizarOrdenes()
+        public List<Relacion> ObtenerRelacionesReelevantes()
+        {
+            foreach (var r in RelacionesEntreMonedas.Values)
+            {
+                r.Limpiar();
+            }
+            ActualizarOrdenes();
+            var relaciones = RelacionesEntreMonedas.Values.ToList();
+            relaciones.Sort();
+            return relaciones.Take(50).ToList();
+        }
+
+        private void ActualizarOrdenes()
         {
             foreach (var p in Providers)
             {
@@ -28,50 +40,32 @@ namespace Dominio.Entidades
             }
         }
         
-        public List<Moneda> ObtenerOperacionOptima(string origen, string destino, decimal cantidad, out string ejecucion)
-        {
-            ejecucion = (origen + destino).ToLower();
-            var monedaOrigen = Monedas[origen.ToLower()];
-            var monedaDestino = Monedas[destino.ToLower()];
-            monedaOrigen.SetCantidad(cantidad, ejecucion);
-
-            var stack = new Queue<Moneda>();
-            stack.Enqueue(monedaOrigen);
-            RecorrerMercado(stack, monedaDestino, ejecucion);
-
-            return Recorrido(monedaDestino, ejecucion);
-        }
-
         public List<string> ObetenerRelacionesEntreMonedas()
         {
-            return RelacionesEntreMonedas.ToList();
+            return RelacionesEntreMonedas.Keys.ToList();
         }
         
         public void AgregarRelacionEntreMonedas(string monedaNameA, string monedaNameB)
         {
             var monedaA = ObtenerMoneda(monedaNameA);
             var monedaB = ObtenerMoneda(monedaNameB);
-
-            RelacionesEntreMonedas.Add(monedaNameA + "_" + monedaNameB);
-            monedaA.AgregarRelacionPorMoneda(monedaB);
-            monedaB.AgregarRelacionPorMoneda(monedaA);
+            
+            RelacionesEntreMonedas.Add(monedaNameA + "_" + monedaNameB, new Relacion(monedaA, monedaB));
         }
 
-        public void AgregarOrdenDeCompra(string monedaAcomprar, string monedaAVender, decimal precio, decimal cantidad)
+        public void AgregarOrden(string relacionName, decimal precio, decimal cantidad, bool esDeVenta)
         {
-            ObtenerMoneda(monedaAcomprar).AgregarOrdenDeCompra(ObtenerMoneda(monedaAVender), precio, cantidad);
-        }
+            RelacionesEntreMonedas.TryGetValue(relacionName, out Relacion relacion);
+            var orden = new Orden()
+            {
+                Cantidad = cantidad,
+                EsDeVenta = esDeVenta,
+                PrecioUnitario = precio
+            };
 
-        public void AgregarOrdenDeVenta(string monedaAVender, string monedaAComprar, decimal precio, decimal cantidad)
-        {
-            AgregarOrdenDeCompra(monedaAComprar, monedaAVender, 1 / precio, precio * cantidad);
+            relacion?.AgregarOrden(orden);
         }
-
-        public List<Moneda> ObtenerMonedas()
-        {
-            return Monedas.Values.ToList(); 
-        }
-
+        
         public Moneda ObtenerMoneda(string moneda)
         {
             if (!Monedas.TryGetValue(moneda, out Moneda retorno))
@@ -82,71 +76,32 @@ namespace Dominio.Entidades
             return retorno;
         }
 
-        public void EjecutarMovimientos(List<Moneda> movimientos, decimal inicial)
-        {
-            var cantidad = inicial;
-            var provider = Providers[0];
-            for (var i = 0; i < movimientos.Count - 1; i++)
-            {
-                var actual = movimientos[i];
-                var siguiente = movimientos[i + 1];
+        //public void EjecutarMovimientos(List<Moneda> movimientos, decimal inicial)
+        //{
+        //    var cantidad = inicial;
+        //    var provider = Providers[0];
+        //    for (var i = 0; i < movimientos.Count - 1; i++)
+        //    {
+        //        var actual = movimientos[i];
+        //        var siguiente = movimientos[i + 1];
 
-                var ordenesNecesarias = provider.ObtenerOrdenesNecesarias(actual, siguiente, cantidad, out string relacion);
+        //        var ordenesNecesarias = provider.ObtenerOrdenesNecesarias(actual, siguiente, cantidad, out string relacion);
 
-                var cantidadResultado = 0M;
-                System.Console.WriteLine("https://yobit.net/en/trade/" + relacion.Replace('_', '/').ToUpper());
-                foreach (var orden in ordenesNecesarias)
-                {
-                    cantidadResultado += provider.EjecutarOrden(orden, relacion);
-                }
+        //        var cantidadResultado = 0M;
+        //        System.Console.WriteLine("https://yobit.net/en/trade/" + relacion.Replace('_', '/').ToUpper());
+        //        foreach (var orden in ordenesNecesarias)
+        //        {
+        //            cantidadResultado += provider.EjecutarOrden(orden, relacion);
+        //        }
 
-                while (provider.HayOrdenesActivas(relacion))
-                {
-                    Thread.Sleep(1500);
-                }
+        //        while (provider.HayOrdenesActivas(relacion))
+        //        {
+        //            Thread.Sleep(1500);
+        //        }
 
-                cantidad = provider.ConsultarSaldo(siguiente.Nombre);
-                cantidad = cantidadResultado;
-            }
-        }
-        
-        private void RecorrerMercado(Queue<Moneda> stack, Moneda destino, string ejecucion)
-        {
-            while (stack.Any())
-            {
-                var monedaActual = stack.Dequeue();
-
-                if(monedaActual == destino && stack.Any())
-                {
-                    if (!stack.Contains(monedaActual))
-                    {
-                        stack.Enqueue(destino);
-                    }
-                    continue;
-                }
-
-                monedaActual.Vicitar(ejecucion);
-                
-                foreach (var n in monedaActual.OrdenesDeCompraPorMoneda.Where(x => !x.Key.Vicitado(ejecucion) && x.Value.Any()))
-                {
-                    var monedaAComprar = n.Key;
-                    if (monedaActual.ConvertirA(monedaAComprar, ejecucion))
-                    {
-                        stack.Enqueue(monedaAComprar);
-                    }
-                }
-            }
-        }
-
-        private List<Moneda> Recorrido(Moneda nodo, string ejecucion)
-        {
-            if (nodo.OrdenesDeCompraMonedaAnterior(ejecucion) == null || !nodo.OrdenesDeCompraMonedaAnterior(ejecucion).Any())
-            {
-                return new List<Moneda>() { nodo };
-            }
-            var lista = Recorrido(nodo.OrdenesDeCompraMonedaAnterior(ejecucion).First().MonedaQueQuieroVender, ejecucion);
-            lista.Add(nodo);
-            return lista;
-        }
+        //        cantidad = provider.ConsultarSaldo(siguiente.Nombre);
+        //        cantidad = cantidadResultado;
+        //    }
+        //}
     }
 }

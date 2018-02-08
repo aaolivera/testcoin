@@ -4,18 +4,20 @@ using Dominio.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 
 namespace Providers
 {
     public class YobitProvider : IProvider
     {
         private readonly string info = @"https://yobit.net/api/3/info";
-        private readonly string depth = @"https://yobit.net/api/3/depth/{0}?ignore_invalid=1";
+        private readonly string depth = @"https://yobit.net/api/3/depth/{0}?limit=40&ignore_invalid=1"; // ordenes acttivas
+        private readonly string relacionInfo = @"https://yobit.net/api/3/ticker/{0}?limit=40&ignore_invalid=1";
         private readonly string priv = @"https://yobit.net/tapi/";
         
         public void CargarOrdenes(Mercado mercado)
         {
-            var relaciones = mercado.ObetenerRelacionesEntreMonedas();
+            var relaciones = mercado.ObetenerRelacionesEntreMonedas().Take(500);
             var page = string.Empty;
             
             //Armo Urls de paginas
@@ -150,19 +152,16 @@ namespace Providers
             var resultado = new List<Orden>();
             foreach (var ordenesPorMoneda in response)
             {
-                var monedas = ordenesPorMoneda.Name.Split('_');
                 relacion = ordenesPorMoneda.Name;
                 var ventas = ordenesPorMoneda.Value["asks"];
                 var compras = ordenesPorMoneda.Value["bids"];
 
-                if (ventas != null && monedas[1] == actual.Nombre)
+                if (ventas != null)
                 {
                     foreach (var ordenVenta in ventas)
                     {
                         resultado.Add(new Orden
                         {
-                            MonedaQueQuieroVender = actual,
-                            MonedaQueQuieroComprar = siguiente,
                             PrecioUnitario = (decimal)ordenVenta[0].Value, // de la moneda a vender
                             Cantidad = (decimal)ordenVenta[1].Value,
                             EsDeVenta = true
@@ -170,14 +169,12 @@ namespace Providers
                     }
                 }
 
-                if (compras != null && monedas[0] == actual.Nombre)
+                if (compras != null)
                 {
                     foreach (var ordenCompra in compras)
                     {
                         resultado.Add(new Orden
                         {
-                            MonedaQueQuieroVender = actual,
-                            MonedaQueQuieroComprar = siguiente,
                             PrecioUnitario = (decimal)ordenCompra[0].Value, // de la moneda a comprar
                             Cantidad = (decimal)ordenCompra[1].Value,
                             EsDeVenta = false
@@ -201,7 +198,7 @@ namespace Providers
                 {
                     foreach (var ordenVenta in ventas)
                     {
-                        mercado.AgregarOrdenDeVenta(monedas[0], monedas[1], (decimal)ordenVenta[0].Value, (decimal)ordenVenta[1].Value);
+                        mercado.AgregarOrden(ordenesPorMoneda.Name, (decimal)ordenVenta[0].Value, (decimal)ordenVenta[1].Value, true);
                     }
                 }
 
@@ -209,7 +206,7 @@ namespace Providers
                 {
                     foreach (var ordenCompra in compras)
                     {
-                        mercado.AgregarOrdenDeCompra(monedas[0], monedas[1], (decimal)ordenCompra[0].Value, (decimal)ordenCompra[1].Value);
+                        mercado.AgregarOrden(ordenesPorMoneda.Name, (decimal)ordenCompra[0].Value, (decimal)ordenCompra[1].Value, false);
                     }
                 }
             }

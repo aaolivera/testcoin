@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dominio", "Dominio\Dominio.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Providers", "Servicios\Providers.csproj", "{AFDB065C-EEAF-48C9-9B1D-7DC6CD082DD7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleAppCaminoOptimo", "ConsoleAppCaminoOptimo\ConsoleAppCaminoOptimo.csproj", "{A7CD8783-276A-4530-B740-4BEC068B4316}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Proxy", "Proxy\Proxy.csproj", "{56B2CDBA-4601-4D97-A652-993DD530F9C8}"
 EndProject
 Global
@@ -31,10 +29,6 @@ Global
 		{AFDB065C-EEAF-48C9-9B1D-7DC6CD082DD7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AFDB065C-EEAF-48C9-9B1D-7DC6CD082DD7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AFDB065C-EEAF-48C9-9B1D-7DC6CD082DD7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A7CD8783-276A-4530-B740-4BEC068B4316}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A7CD8783-276A-4530-B740-4BEC068B4316}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A7CD8783-276A-4530-B740-4BEC068B4316}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A7CD8783-276A-4530-B740-4BEC068B4316}.Release|Any CPU.Build.0 = Release|Any CPU
 		{56B2CDBA-4601-4D97-A652-993DD530F9C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{56B2CDBA-4601-4D97-A652-993DD530F9C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{56B2CDBA-4601-4D97-A652-993DD530F9C8}.Release|Any CPU.ActiveCfg = Release|Any CPU

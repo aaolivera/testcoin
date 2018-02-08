@@ -4,8 +4,6 @@ namespace Dominio.Entidades
 {
     public class Orden : IComparable<Orden>
     {
-        public Moneda MonedaQueQuieroVender { get; set; }
-        public Moneda MonedaQueQuieroComprar { get; set; }
         public decimal Cantidad { get; set; }
         public decimal PrecioUnitario { get; set; }
         public bool EsDeVenta { get; set; }

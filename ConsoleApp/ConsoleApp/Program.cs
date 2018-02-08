@@ -16,19 +16,12 @@ namespace ConsoleApp
             {
                 var providers = new List<IProvider> { new YobitProvider() };
                 var mercado = new Mercado(providers);
-                mercado.ActualizarOrdenes();
-                var monedas = mercado.ObtenerMonedas();
-                var monedaPilar = "btc";
-
-                System.Console.WriteLine("");
-                var inicial = 0.0001002M;
+                var relaciones = mercado.ObtenerRelacionesReelevantes();
 
                 var tasks = new List<Task>();
-                foreach (var moneda in monedas)
+                foreach (var r in relaciones)
                 {
-                    ChequearMoneda(mercado, monedaPilar, inicial, moneda.Nombre);
-
-                    //tasks.Add(ChequearMonedaAsync(mercado, monedaPilar, inicial, moneda.Nombre));
+                    System.Console.WriteLine($"{r.Principal.Nombre} - {r.Secundaria.Nombre} => delta {r.Delta}");
                 }
                 System.Console.WriteLine("Buscando...");
                 Task.WaitAll(tasks.ToArray());
@@ -37,51 +30,5 @@ namespace ConsoleApp
             }
         }
 
-        private static async Task ChequearMonedaAsync(Mercado mercado, string monedaPilar, decimal inicial, string monedaDestino)
-        {
-            await Task.Run(() =>
-            {
-                ChequearMoneda(mercado, monedaPilar, inicial, monedaDestino);
-            });
-        }
-        
-        private static void ChequearMoneda(Mercado mercado, string monedaPilar, decimal inicial, string monedaDestino)
-            {
-                var movimientosIda = mercado.ObtenerOperacionOptima(monedaPilar, monedaDestino, inicial, out string ejecucionIda);
-                var cantidadDestino = movimientosIda.Last().Cantidad(ejecucionIda);
-                if (cantidadDestino > 0)
-                {
-                    var movimientosVuelta = mercado.ObtenerOperacionOptima(monedaDestino, monedaPilar, cantidadDestino, out string ejecucionvuelta);
-                    var cantidadVuelta = movimientosVuelta.Last().Cantidad(ejecucionvuelta);
- 
-                    if (cantidadVuelta > 0)
-                    {
-                        movimientosVuelta.RemoveAt(0);
-                        var todos = new List<Moneda>();
-                        todos.AddRange(movimientosIda);
-                        todos.AddRange(movimientosVuelta);
-                        var porcentaje = (((cantidadVuelta - inicial) * 100) / inicial);
-                        var cantidadMovimientos = todos.Count - 1;
-                        if (porcentaje >= 4 && cantidadMovimientos <= 4)
-                        {
-                            var texto = $"{(cantidadMovimientos).ToString("00")}|{porcentaje.ToString("00.00")}|";
-
-                            foreach (var m in movimientosIda)
-                            {
-                                texto += $"({m.Nombre}:{m.Cantidad(ejecucionIda).ToString("F08", CultureInfo.InvariantCulture)})";
-                            }
-                            foreach (var m in movimientosVuelta)
-                            {
-                                texto += $"({m.Nombre}:{m.Cantidad(ejecucionvuelta).ToString("F08", CultureInfo.InvariantCulture)})";
-                            }
-                            System.Console.WriteLine("////////////////////////////////////////////////////////////////");
-                            System.Console.WriteLine(texto);
-                        mercado.EjecutarMovimientos(todos, inicial);
-                        System.Console.WriteLine("////////////////////////////////////////////////////////////////");
-                        System.Console.ReadLine();
-                    }
-                }
-                };
-        }        
     }
 }
