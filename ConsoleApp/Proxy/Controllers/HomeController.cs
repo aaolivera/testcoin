@@ -1,4 +1,6 @@
 ﻿using CloudFlareUtilities;
+using Proxy.Models.Proxy.Models;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,6 +29,19 @@ namespace Proxy.Controllers
             var result = await response.Content.ReadAsByteArrayAsync();
 
             return Encoding.UTF8.GetString(result);
+        }
+
+        public HttpWebResponseResult Index2(string url = null)
+        {
+            return ExternalGet(url);
+        }
+
+        private HttpWebResponseResult ExternalGet(string url)
+        {
+            var getRequest = (HttpWebRequest)WebRequest.Create(url);
+            var getResponse = (HttpWebResponse)getRequest.GetResponse();
+
+            return new HttpWebResponseResult(getResponse);
         }
     }
 }

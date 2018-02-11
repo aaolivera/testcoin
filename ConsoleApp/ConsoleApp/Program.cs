@@ -16,12 +16,12 @@ namespace ConsoleApp
             {
                 var providers = new List<IProvider> { new YobitProvider() };
                 var mercado = new Mercado(providers);
-                var relaciones = mercado.ObtenerRelacionesReelevantes();
+                var relaciones = mercado.ListarRelacionesReelevantes();
 
                 var tasks = new List<Task>();
                 foreach (var r in relaciones)
                 {
-                    System.Console.WriteLine($"{r.Principal.Nombre} - {r.Secundaria.Nombre} => delta {r.Delta}");
+                    System.Console.WriteLine($"{r.Principal.Nombre} - {r.Secundaria.Nombre} => delta {r.DeltaEjecutado} - volumen {r.Volumen}");
                 }
                 System.Console.WriteLine("Buscando...");
                 Task.WaitAll(tasks.ToArray());

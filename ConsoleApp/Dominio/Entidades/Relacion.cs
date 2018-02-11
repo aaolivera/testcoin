@@ -9,31 +9,27 @@ namespace Dominio.Entidades
     {
         public Moneda Principal { get;}
         public Moneda Secundaria { get; }
-        private List<Orden> Compra { get; }
-        private List<Orden> Venta { get; }
-        public decimal MayorPrecioDeVenta { get; }
-        public decimal Volumen { get; }
-
-        public decimal Delta
+        private List<Orden> Compras { get; }
+        private List<Orden> Ventas { get; }
+        public decimal MayorPrecioDeVentaAjecutada { get; set; }
+        public decimal Volumen { get; set; }
+        public decimal Compra { get; set; }
+        public decimal Venta { get; set; }
+        public string Nombre { get { return Principal.Nombre.ToLower() + "_" + Secundaria.Nombre.ToLower(); } }
+        public decimal PruebaDelBitcoin { get; set; }
+        public decimal DeltaEjecutado
         {
             get
             {
-                var baseCompra = Compra.Sum(x => x.Cantidad);
-                if (MayorPrecioDeVenta == 0 || baseCompra == 0 || Volumen == 0) return 0;
-                var compraPonderada = Compra.Sum(x => x.Cantidad * x.PrecioUnitario) / baseCompra;
-                return Math.Round((MayorPrecioDeVenta - compraPonderada) * 100 / (MayorPrecioDeVenta == 0 ? 1 : MayorPrecioDeVenta), 0);
+                if (MayorPrecioDeVentaAjecutada == 0 || Compra == 0 || Volumen == 0) return 0;
+                return Math.Round((MayorPrecioDeVentaAjecutada - Compra) * 100 / (MayorPrecioDeVentaAjecutada == 0 ? 1 : MayorPrecioDeVentaAjecutada), 0);
             }
         }
 
-        public decimal DeltaPonderado {
+        public decimal DeltaActual {
             get
             {
-                var baseCompra = Compra.Sum(x => x.Cantidad);
-                var baseVenta = Venta.Sum(x => x.Cantidad);
-                if (baseVenta == 0 || baseCompra == 0 || Volumen == 0) return 0;
-                var compraPonderada = Compra.Sum(x => x.Cantidad * x.PrecioUnitario) / baseCompra;
-                var ventaPonderada = Venta.Sum(x => x.Cantidad * x.PrecioUnitario) / baseVenta;
-                return Math.Round((ventaPonderada - compraPonderada) * 100 / (ventaPonderada == 0 ? 1 : ventaPonderada), 0);
+                return Math.Round((Venta - Compra) * 100 / (Venta == 0 ? 1 : Venta), 0);
             }
         }
 
@@ -41,31 +37,31 @@ namespace Dominio.Entidades
         {
             Principal = principal;
             Secundaria = secundaria;
-            Compra = new List<Orden>();
-            Venta = new List<Orden>();
+            Compras = new List<Orden>();
+            Ventas = new List<Orden>();
         }
 
         public void AgregarOrden(Orden orden)
         {
             if (orden.EsDeVenta)
             {
-                Venta.AddSorted(orden);
+                Ventas.AddSorted(orden);
             }
             else
             {
-                Compra.AddSorted(orden);
+                Compras.AddSorted(orden);
             }
         }
 
         public void Limpiar()
         {
-            Compra.Clear();
-            Venta.Clear();
+            Compras.Clear();
+            Ventas.Clear();
         }
 
         public int CompareTo(Relacion other)
         {
-            return Delta > other.Delta ? -1 : (Delta < other.Delta ? 1 : 0);
+            return DeltaEjecutado > other.DeltaEjecutado ? -1 : (DeltaEjecutado < other.DeltaEjecutado ? 1 : 0);
         }
     }
 }

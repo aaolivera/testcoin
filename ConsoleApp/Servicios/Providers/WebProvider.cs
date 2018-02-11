@@ -1,17 +1,15 @@
-﻿using CloudFlareUtilities;
-using Dominio.Helper;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Providers
+
+namespace Servicios
 {
     public static class WebProvider
     {
@@ -32,11 +30,11 @@ namespace Providers
 
         public static dynamic PostPage(string url, string body, Dictionary<string, string> headers)
         {
-            var handler = new ClearanceHandler
-            {
-                MaxRetries = 2
-            };
-            var client = new HttpClient(handler);
+            //var handler = new ClearanceHandler
+            //{
+            //    MaxRetries = 2
+            //};
+            var client = new HttpClient();
             HttpContent queryString = new StringContent(body);
             queryString.Headers.Clear();
             foreach (var i in headers.Keys)
@@ -59,11 +57,12 @@ namespace Providers
         {
             try
             {
-                var handler = new ClearanceHandler
-                {
-                    MaxRetries = 2
-                };
-                var client = new HttpClient(handler);
+                Thread.Sleep(1500);
+                //var handler = new ClearanceHandler
+                //{
+                //    MaxRetries = 2
+                //};
+                var client = new HttpClient();
                 HttpResponseMessage response = client.GetAsync(url).Result;
                 response.EnsureSuccessStatusCode();
                 var result = response.Content.ReadAsByteArrayAsync().Result;
@@ -83,7 +82,7 @@ namespace Providers
             }
         }
 
-        public static async Task<List<dynamic>> DownloadPages(List<string> urls)
+        public static async Task<List<dynamic>> DownloadPages(List<string> urls, Action notificarAvance)
         {
             Console.WriteLine($"Iniciando descarga {urls.Count}");
             var retorno = new List<dynamic>();
@@ -98,7 +97,7 @@ namespace Providers
                 {
                     tamaniobloque = urls.Count - indiceBloque;
                 }
-                tasks.Add(DownloadPagesAsync(urls.Skip(indiceBloque).Take(tamaniobloque).ToList(), p));
+                tasks.Add(DownloadPagesAsync(urls.Skip(indiceBloque).Take(tamaniobloque).ToList(), p, notificarAvance));
                 indiceBloque += tamaniobloque;
             }
             var bloques = (await Task.WhenAll(tasks.ToArray())).ToList();
@@ -109,7 +108,7 @@ namespace Providers
                 var paginas = bloques.SelectMany(x => x.PaginasFallidas).ToList();
                 Console.WriteLine($"Existen {paginas.Count} paginas fallidas, reprocesandolas");
                 
-                var bloqueReprocesado = new Bloque { PaginasDescargadas = DownloadPages(paginas).Result };
+                var bloqueReprocesado = new Bloque { PaginasDescargadas = DownloadPages(paginas, notificarAvance).Result };
                 bloques.Add(bloqueReprocesado);
             }
             stopwatch.Stop();
@@ -117,7 +116,7 @@ namespace Providers
             return bloques.SelectMany(x => x.PaginasDescargadas).ToList();
         }
 
-        private static async Task<Bloque> DownloadPagesAsync(List<string> urls, string proxy)
+        private static async Task<Bloque> DownloadPagesAsync(List<string> urls, string proxy, Action notificarAvance)
         {
             var list = await Task.Run(() =>
             {
@@ -137,6 +136,7 @@ namespace Providers
                             retorno.PaginasDescargadas.Add(DownloadPage(proxy + url));
                         }
                         Console.WriteLine($"{n++}/{urls.Count} - {proxy}");
+                        notificarAvance();
                     }
                 }
                 catch

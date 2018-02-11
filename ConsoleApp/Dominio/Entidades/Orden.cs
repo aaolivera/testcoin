@@ -9,7 +9,7 @@ namespace Dominio.Entidades
         public bool EsDeVenta { get; set; }
         public int CompareTo(Orden other)
         {
-            return PrecioUnitario > other.PrecioUnitario ? -1 : (PrecioUnitario < other.PrecioUnitario ? 1 : 0);
+            return (PrecioUnitario > other.PrecioUnitario ? -1 : (PrecioUnitario < other.PrecioUnitario ? 1 : 0)) * (EsDeVenta ? -1 : 1);
         }
 
         public override string ToString()
