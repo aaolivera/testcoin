@@ -62,8 +62,9 @@ namespace ConsoleApp
                         todos.AddRange(movimientosVuelta);
                         var porcentaje = (((cantidadVuelta - inicial) * 100) / inicial);
                         var cantidadMovimientos = todos.Count - 1;
-                        if (porcentaje >= 4 && cantidadMovimientos <= 4)
-                        {
+                    //if (porcentaje >= 4 && cantidadMovimientos <= 4)
+                    if (porcentaje >= 4)
+                    {
                             var texto = $"{(cantidadMovimientos).ToString("00")}|{porcentaje.ToString("00.00")}|";
 
                             foreach (var m in movimientosIda)
