@@ -33,7 +33,7 @@ namespace Servicios.Imp
         {
             var relaciones = RelacionesEntreMonedas.Values.ToList();
             relaciones.Sort();
-            return relaciones.Take(100).OrderByDescending(x => x.Volumen);
+            return relaciones.Where(x => x.Volumen > 10000);
         }
 
         public IEnumerable<Relacion> ListarRelaciones()
@@ -50,10 +50,10 @@ namespace Servicios.Imp
                 Estado.RelacionesActualizadas = 0;
                 foreach (var p in Providers)
                 {
-                    p.CargarOrdenes(this);
                     p.CargarEstadosDeOrdenes(this);
+                    //p.CargarOrdenes(this);                    
                 }
-                //PruebaDelBitcoin();
+                PruebaDelBitcoin();
                 Estado.UpdateEnProgreso = false;
                 Estado.UltimoUpdate = DateTime.Now;
             });

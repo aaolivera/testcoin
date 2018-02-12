@@ -46,7 +46,7 @@ else
         <th>Volumen</th>
         <th>Prueba del bitcoin</th>
     </tr>
-    @foreach (var relacion in (IEnumerable<Relacion>)ViewBag.Relaciones)
+    @foreach (var relacion in ((IEnumerable<Relacion>)ViewBag.Relaciones))
     {
     <tr>
         <td><a href="https://www.yobit.net/en/trade/@relacion.Principal.Nombre.ToUpper()/@relacion.Secundaria.Nombre.ToUpper()" target="_blank">@relacion.Nombre</a></td>
