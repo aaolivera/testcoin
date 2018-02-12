@@ -53,7 +53,7 @@ namespace Servicios.Imp
                     p.CargarOrdenes(this);
                     p.CargarEstadosDeOrdenes(this);
                 }
-                PruebaDelBitcoin();
+                //PruebaDelBitcoin();
                 Estado.UpdateEnProgreso = false;
                 Estado.UltimoUpdate = DateTime.Now;
             });
@@ -71,9 +71,15 @@ namespace Servicios.Imp
             foreach (var relacion in ListarRelacionesReelevantes())
             {
                 var cantidadPrincipal = ConvertirMoneda(btc, relacion.Principal, cantidadInicial, false);
-                var cantidadSecundaria = ConvertirMoneda(relacion.Principal, relacion.Secundaria, cantidadPrincipal, true);
+
+                var cantidadSecundaria = cantidadPrincipal * (relacion.MayorPrecioDeVentaAjecutada / 2);
+                var cantidadSecundariaRealista = ConvertirMoneda(relacion.Principal, relacion.Secundaria, cantidadSecundaria, true);
+
                 var resultadoBtc = ConvertirMoneda(relacion.Secundaria, btc, cantidadSecundaria, false);
+                var resultadoBtcRealista = ConvertirMoneda(relacion.Secundaria, btc, cantidadSecundariaRealista, false);
+
                 relacion.PruebaDelBitcoin = (resultadoBtc - cantidadInicial) * 100 / cantidadInicial;
+                relacion.PruebaDelBitcoinRealista = (resultadoBtcRealista - cantidadInicial) * 100 / cantidadInicial;
             }
         }
 

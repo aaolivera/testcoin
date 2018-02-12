@@ -17,6 +17,7 @@ namespace Dominio.Entidades
         public decimal Venta { get; set; }
         public string Nombre { get { return Principal.Nombre.ToLower() + "_" + Secundaria.Nombre.ToLower(); } }
         public decimal PruebaDelBitcoin { get; set; }
+        public decimal PruebaDelBitcoinRealista { get; set; }
         public decimal DeltaEjecutado
         {
             get

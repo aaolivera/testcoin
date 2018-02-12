@@ -54,7 +54,8 @@ else
         <td>@relacion.Compra</td>
         <td>@relacion.MayorPrecioDeVentaAjecutada</td>
         <td>@relacion.Volumen</td>
-        <td>@relacion.PruebaDelBitcoin%</td>
+        <td class="@(@relacion.PruebaDelBitcoin > 0 ? "success" : "danger")">@Math.Round(relacion.PruebaDelBitcoin)%</td>
+        <td class="@(@relacion.PruebaDelBitcoinRealista > 0 ? "success" : "danger")">@Math.Round(relacion.PruebaDelBitcoinRealista)%</td>
     </tr>
     }
 </table>
