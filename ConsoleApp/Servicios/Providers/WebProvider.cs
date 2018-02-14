@@ -82,7 +82,7 @@ namespace Servicios
             }
         }
 
-        public static async Task<List<dynamic>> DownloadPages(List<string> urls, Action notificarAvance)
+        public static async Task<List<dynamic>> DownloadPages(List<string> urls, Action<string> notificarAvance)
         {
             Console.WriteLine($"Iniciando descarga {urls.Count}");
             var retorno = new List<dynamic>();
@@ -116,7 +116,7 @@ namespace Servicios
             return bloques.SelectMany(x => x.PaginasDescargadas).ToList();
         }
 
-        private static async Task<Bloque> DownloadPagesAsync(List<string> urls, string proxy, Action notificarAvance)
+        private static async Task<Bloque> DownloadPagesAsync(List<string> urls, string proxy, Action<string> notificarAvance)
         {
             var list = await Task.Run(() =>
             {
@@ -136,7 +136,7 @@ namespace Servicios
                             retorno.PaginasDescargadas.Add(DownloadPage(proxy + url));
                         }
                         Console.WriteLine($"{n++}/{urls.Count} - {proxy}");
-                        notificarAvance();
+                        notificarAvance(url);
                     }
                 }
                 catch

@@ -1,4 +1,4 @@
-﻿using Dominio.Entidades;
+﻿using Dominio.Dto;
 using Dominio.Interfaces;
 using Providers;
 using System.Collections.Generic;

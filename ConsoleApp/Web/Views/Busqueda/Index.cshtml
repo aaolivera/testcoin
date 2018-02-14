@@ -1,0 +1,66 @@
+﻿@using Dominio.Entidades
+@{
+    ViewBag.Title = "Home Page";
+    var Estado = (Estado)ViewBag.Estado;
+}
+@section Scripts
+{
+    <script type="text/javascript">
+        var cantidadDeRelaciones = @Estado.CantidadDeRelaciones;
+        if ("@Estado.UpdateEnProgreso" == "True")
+        {
+            $(document).ready(function() {
+                setInterval(function(){
+                $.get("Home/ObtenerCantidadActualizada", function(data) {
+                    $("#cantidad").html(data);
+                    if (cantidadDeRelaciones == data) {
+                        location.reload();
+                    }
+                    });
+                }, 2000);
+            })
+         }
+    </script>
+}
+
+@if (Estado.UpdateEnProgreso)
+{
+    <div class="alert alert-info" role="alert">
+        <strong>Relaciones Actualizadas: </strong><span id="cantidad">@Estado.RelacionesActualizadas</span>/@Estado.CantidadDeRelaciones        
+    </div>
+}
+else
+{
+    <div class="alert alert-success" role="alert">
+        <strong>Relaciones Analizadas: </strong>@Estado.CantidadDeRelaciones, @Estado.UltimoUpdate
+        @Html.ActionLink("Actualizar", "Actualizar")
+    </div>
+}
+
+<table class="table table-striped">
+    <tr>
+        <th>Relacion</th>
+        <th>Venta</th>
+        <th>Compra</th>
+        <th>Compra ejecutada</th>
+        <th>Volumen</th>
+        <th>Prueba del bitcoin</th>
+    </tr>
+    @foreach (var relacion in ((IEnumerable<Relacion>)ViewBag.Relaciones))
+    {
+    <tr>
+        <td><a href="https://www.yobit.net/en/trade/@relacion.Principal.Nombre.ToUpper()/@relacion.Secundaria.Nombre.ToUpper()" target="_blank">@relacion.Nombre</a></td>
+        <td>@relacion.Venta</td>
+        <td>@relacion.Compra</td>
+        <td>@relacion.MayorPrecioDeVentaAjecutada</td>
+        <td>@relacion.Volumen</td>
+        <td class="@(@relacion.PruebaDelBitcoin > 0 ? "success" : "danger")">@Math.Round(relacion.PruebaDelBitcoin)%</td>
+        <td class="@(@relacion.PruebaDelBitcoinRealista > 0 ? "success" : "danger")">@Math.Round(relacion.PruebaDelBitcoinRealista)%</td>
+    </tr>
+    }
+</table>
+
+
+<div class="row">
+
+</div>

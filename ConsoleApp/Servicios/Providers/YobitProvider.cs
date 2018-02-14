@@ -1,4 +1,4 @@
-﻿using Dominio.Entidades;
+﻿using Dominio.Dto;
 using Dominio.Helper;
 using Servicios.Interfaces;
 using Servicios.Properties;
@@ -16,7 +16,7 @@ namespace Servicios
         private readonly string relacionInfo = @"https://yobit.net/api/3/ticker/{0}?limit=40&ignore_invalid=1";
         private readonly string priv = @"https://yobit.net/tapi/";
         
-        public void CargarOrdenes(IOperador operador, List<string> ordenesAActualizar = null)
+        public void CargarOrdenes(IOperadorInput operador, List<string> ordenesAActualizar = null)
         {
             List<string> relaciones;
             if (ordenesAActualizar != null)
@@ -30,14 +30,14 @@ namespace Servicios
             List<string> paginasOrdenes = GenerarPaginas(relaciones, depth);
 
             //Obtengo y cargo       
-            var responses = WebProvider.DownloadPages(paginasOrdenes, () => { }).Result;
+            var responses = WebProvider.DownloadPages(paginasOrdenes, x => { }).Result;
             foreach (var response in responses)
             {
                 CargarPaginaDeOrdenes(response, operador);
             }
         }
 
-        public void CargarEstadosDeOrdenes(IOperador operador, List<string> ordenesAActualizar = null)
+        public void CargarEstadosDeOrdenes(IOperadorInput operador, List<string> ordenesAActualizar = null)
         {
             List<string> relaciones;
             if (ordenesAActualizar != null)
@@ -50,14 +50,14 @@ namespace Servicios
             }
             List<string> paginasOrdenes = GenerarPaginas(relaciones, relacionInfo);
             operador.NotificarPaginas(paginasOrdenes.Count());
-            var responsesEstado = WebProvider.DownloadPages(paginasOrdenes, () => operador.NotificarAvance()).Result;
+            var responsesEstado = WebProvider.DownloadPages(paginasOrdenes, x => operador.NotificarAvance(x)).Result;
             foreach (var response in responsesEstado)
             {
                 CargarPaginaDeEstados(response, operador);
             }
         }
 
-        public void CargarMonedas(IOperador mercado)
+        public void CargarMonedas(IOperadorInput mercado)
         {
             dynamic response = WebProvider.DownloadPage(info);
 
@@ -94,7 +94,7 @@ namespace Servicios
             
         }
 
-        public List<Orden> ObtenerOrdenesNecesarias(Moneda actual, Moneda siguiente, decimal inicial, bool usarPromedio, out string relacion)
+        public List<Orden> ObtenerOrdenesNecesarias(string actual, string siguiente, decimal inicial, bool usarPromedio, out string relacion)
         {
             var ordenesActivas = ObtenerOrdenesActivas(actual, siguiente, out relacion);
             var ordenesNecesarias = new List<Orden>();
@@ -104,11 +104,11 @@ namespace Servicios
             {
                 var ordenes = ordenesActivas.Where(x => !x.EsDeVenta).Take(5).Union(ordenesActivas.Where(x => x.EsDeVenta).Take(5));
                 var promedio = ordenes.Sum(x => x.PrecioUnitario * x.Cantidad) / ordenes.Sum(x => x.Cantidad);
-                if(monedas[0] == actual.Nombre)
+                if(monedas[0] == actual)
                 {
                     ordenesNecesarias.Add(new Orden { Cantidad = inicial, EsDeVenta = false, PrecioUnitario = promedio });
                 }
-                else if (monedas[1] == actual.Nombre)
+                else if (monedas[1] == actual)
                 {
                     ordenesNecesarias.Add(new Orden { Cantidad = Decimal.Round(inicial / promedio, 8, MidpointRounding.ToEven), EsDeVenta = true, PrecioUnitario = promedio });
                 }
@@ -117,7 +117,7 @@ namespace Servicios
             {
                 foreach (var orden in ordenesActivas)
                 {
-                    if (orden.EsDeVenta && monedas[1] == actual.Nombre)
+                    if (orden.EsDeVenta && monedas[1] == actual)
                     {
                         var cantidadActualQuePuedoGastar = Decimal.Round((inicial - 0.2M / 100 * inicial), 8, MidpointRounding.ToEven);
                         var cantidadActualAgastarEnEstaOrden = 0M;
@@ -140,7 +140,7 @@ namespace Servicios
                         orden.Cantidad = Decimal.Round(cantidadActualAgastarEnEstaOrden / orden.PrecioUnitario, 8, MidpointRounding.ToEven);
                         cantidadActual += cantidadActualAgastarEnEstaOrden;
                     }
-                    else if (!orden.EsDeVenta && monedas[0] == actual.Nombre)
+                    else if (!orden.EsDeVenta && monedas[0] == actual)
                     {
                         var cantidadActualAVender = 0M;
                         if (cantidadActual + orden.Cantidad < inicial)
@@ -170,9 +170,9 @@ namespace Servicios
             return ordenesNecesarias;
         }
         
-        private List<Orden> ObtenerOrdenesActivas(Moneda actual, Moneda siguiente, out string relacion)
+        private List<Orden> ObtenerOrdenesActivas(string actual, string siguiente, out string relacion)
         {
-            var url = string.Format(depth, $"{actual.Nombre}_{siguiente.Nombre}-{siguiente.Nombre}_{actual.Nombre}");
+            var url = string.Format(depth, $"{actual}_{siguiente}-{siguiente}_{actual}");
             relacion = string.Empty;
             var response = WebProvider.DownloadPage(url);
             var resultado = new List<Orden>();
@@ -243,14 +243,13 @@ namespace Servicios
             return paginasOrdenes;
         }
 
-        private void CargarPaginaDeOrdenes(dynamic response, IOperador mercado)
+        private void CargarPaginaDeOrdenes(dynamic response, IOperadorInput mercado)
         {
             foreach (var ordenesPorMoneda in response)
             {
                 var ventas = ordenesPorMoneda.Value["asks"];
                 var compras = ordenesPorMoneda.Value["bids"];
-
-                mercado.Limpiar(ordenesPorMoneda.Name);
+                
                 if (ventas != null)
                 {
                     foreach (var ordenVenta in ventas)
@@ -269,7 +268,7 @@ namespace Servicios
             }
         }
 
-        private void CargarPaginaDeEstados(dynamic response, IOperador mercado)
+        private void CargarPaginaDeEstados(dynamic response, IOperadorInput mercado)
         {
             foreach (var ordenesPorMoneda in response)
             {
@@ -277,7 +276,7 @@ namespace Servicios
                 var volumen = ordenesPorMoneda.Value["vol"];
                 var compra = ordenesPorMoneda.Value["buy"];
                 var venta = ordenesPorMoneda.Value["sell"];
-                mercado.AgregarEstadoOrden(ordenesPorMoneda.Name, (decimal)mayorPrecioDeVentaAjecutada, (decimal)volumen, (decimal)compra, (decimal)venta);
+                mercado.ActualizarEstadoOrden(ordenesPorMoneda.Name, (decimal)mayorPrecioDeVentaAjecutada, (decimal)volumen, (decimal)compra, (decimal)venta);
             }
         }
 

@@ -1,8 +1,10 @@
 ﻿
 using Ninject.Modules;
-using Servicios;
+using Repositorio;
 using Servicios.Imp;
 using Servicios.Interfaces;
+using System.Data.Entity;
+using System.ServiceModel;
 
 namespace Molinos.Scato.Dependencias
 {
@@ -10,8 +12,12 @@ namespace Molinos.Scato.Dependencias
     {
         public override void Load()
         {
-            Bind<IOperador, Operador>().To<Operador>().InSingletonScope();
 
+            Bind<IEstadoOperador, EstadoOperador>().To<EstadoOperador>().InSingletonScope();
+            Bind<IOperador, Operador>().To<Operador>().InScope(ctx => OperationContext.Current);
+            Bind<DbContext>().To<ConsoleDbContext>().InScope(ctx => OperationContext.Current);
+            Bind<IRepositorio, RepositorioEF>().To<RepositorioEF>().InScope(ctx => OperationContext.Current);
+            
         }
     }
 }

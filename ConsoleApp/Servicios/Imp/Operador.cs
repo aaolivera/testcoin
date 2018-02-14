@@ -1,45 +1,24 @@
-﻿using Dominio.Entidades;
+﻿using Dominio.Dto;
+using Dominio.Entidades;
+using Repositorio;
 using Servicios.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Servicios.Imp
 {
-    public class Operador : IOperador
+    public class Operador : IOperador, IOperadorInput
     {
         private List<IProvider> Providers = new List<IProvider>() { new YobitProvider() };
-        private Dictionary<string, Moneda> Monedas { get; } = new Dictionary<string, Moneda>();
-        private Dictionary<string, Relacion> RelacionesEntreMonedas { get; } = new Dictionary<string, Relacion>();
-        private Estado Estado;
-        public Operador()
-        {
-            foreach (var p in Providers)
-            {
-                p.CargarMonedas(this);
-            }
-            Estado = new Estado()
-            {
-                CantidadDeRelaciones = RelacionesEntreMonedas.Count,
-                RelacionesActualizadas = 0,
-                UltimoUpdate = DateTime.Now,
-                UpdateEnProgreso = false
-            };
-        }
-        
-        public IEnumerable<Relacion> ListarRelacionesReelevantes()
-        {
-            var relaciones = RelacionesEntreMonedas.Values.ToList();
-            relaciones.Sort();
-            return relaciones.Where(x => x.Volumen > 10000);
-        }
+        public IRepositorio Repositorio { get; }
+        public IEstadoOperador Estado { get; }
 
-        public IEnumerable<Relacion> ListarRelaciones()
+        public Operador(IRepositorio repositorio, IEstadoOperador estado)
         {
-            var relaciones = RelacionesEntreMonedas.Values.ToList();
-            return relaciones;
+            Estado = estado;
+            Repositorio = repositorio;            
         }
 
         public async void ActualizarOrdenes()
@@ -50,62 +29,44 @@ namespace Servicios.Imp
                 Estado.RelacionesActualizadas = 0;
                 foreach (var p in Providers)
                 {
-                    p.CargarEstadosDeOrdenes(this);
-                    //p.CargarOrdenes(this);                    
+                    p.CargarMonedas(this);
+                    p.CargarEstadosDeOrdenes(this);           
                 }
-                PruebaDelBitcoin();
+                Estado.GuardandoCambios = true;
+                Repositorio.GuardarCambios();
+                Estado.GuardandoCambios = false;
                 Estado.UpdateEnProgreso = false;
                 Estado.UltimoUpdate = DateTime.Now;
             });
         }
         
-        public Estado ObtenerEstado()
+        public IEnumerable<Relacion> ListarRelacionesReelevantes()
         {
-            return Estado;
+            return Repositorio.Listar<Relacion>(x => x.Volumen > 10000).OrderBy(x => x.DeltaEjecutado);
         }
 
-        private void PruebaDelBitcoin()
+        public IEnumerable<Relacion> ListarRelaciones()
         {
-            var btc = ObtenerMoneda("btc");
-            var cantidadInicial = 0.0001M;
-            foreach (var relacion in ListarRelacionesReelevantes())
-            {
-                var cantidadPrincipal = ConvertirMoneda(btc, relacion.Principal, cantidadInicial, false);
-
-                var cantidadSecundaria = cantidadPrincipal * (relacion.MayorPrecioDeVentaAjecutada / 2);
-                var cantidadSecundariaRealista = ConvertirMoneda(relacion.Principal, relacion.Secundaria, cantidadSecundaria, true);
-
-                var resultadoBtc = ConvertirMoneda(relacion.Secundaria, btc, cantidadSecundaria, false);
-                var resultadoBtcRealista = ConvertirMoneda(relacion.Secundaria, btc, cantidadSecundariaRealista, false);
-
-                relacion.PruebaDelBitcoin = (resultadoBtc - cantidadInicial) * 100 / cantidadInicial;
-                relacion.PruebaDelBitcoinRealista = (resultadoBtcRealista - cantidadInicial) * 100 / cantidadInicial;
-            }
-        }
-
-        private decimal ConvertirMoneda(Moneda inicial, Moneda final, decimal cantidad, bool usarPromedio)
-        {
-            var ordenes = Providers.First().ObtenerOrdenesNecesarias(inicial, final, cantidad, usarPromedio, out string r);
-            var cantidadDestino = 0M;
-            foreach (var i in ordenes)
-            {
-                cantidadDestino += i.EsDeVenta ? i.Cantidad : Decimal.Round((i.Cantidad * i.PrecioUnitario) - (0.2M / 100 * (i.Cantidad * i.PrecioUnitario)), 8);
-            }
-            return cantidadDestino;
+            return Repositorio.Listar<Relacion>();
         }
 
         #region iprovider
         public void AgregarRelacionEntreMonedas(string monedaNameA, string monedaNameB)
         {
-            var monedaA = ObtenerMoneda(monedaNameA);
-            var monedaB = ObtenerMoneda(monedaNameB);
-
-            RelacionesEntreMonedas.Add(monedaNameA + "_" + monedaNameB, new Relacion(monedaA, monedaB));
+            var retorno = Repositorio.Obtener<Relacion>(x => x.Nombre == monedaNameA + "_" + monedaNameB);
+            if (retorno == null)
+            {
+                var monedaA = ObtenerMoneda(monedaNameA);
+                var monedaB = ObtenerMoneda(monedaNameB);
+                retorno = new Relacion() { Principal = monedaA, Secundaria = monedaB, Nombre = monedaNameA + "_" + monedaNameB, FechaDeActualizacion = DateTime.Now};
+                Repositorio.Agregar(retorno);
+                Estado.CantidadDeRelaciones++;
+            }
         }
 
         public void AgregarOrden(string relacionName, decimal precio, decimal cantidad, bool esDeVenta)
         {
-            RelacionesEntreMonedas.TryGetValue(relacionName, out Relacion relacion);
+            var relacion = Repositorio.Obtener<Relacion>(x => x.Nombre == relacionName);
             var orden = new Orden()
             {
                 Cantidad = cantidad,
@@ -116,35 +77,29 @@ namespace Servicios.Imp
             relacion?.AgregarOrden(orden);
         }
 
-        public void AgregarEstadoOrden(string relacionName, decimal mayorPrecioDeVentaAjecutada, decimal volumen, decimal compra, decimal venta)
+        public void ActualizarEstadoOrden(string relacionName, decimal mayorPrecioDeVentaAjecutada, decimal volumen, decimal compra, decimal venta)
         {
-            RelacionesEntreMonedas.TryGetValue(relacionName, out Relacion relacion);
+            var relacion = Repositorio.Obtener<Relacion>(x => x.Nombre == relacionName);
             if (relacion != null)
             {
                 relacion.MayorPrecioDeVentaAjecutada = mayorPrecioDeVentaAjecutada;
                 relacion.Venta = venta;
                 relacion.Compra = compra;
                 relacion.Volumen = volumen;
+                relacion.CalcularDeltas();
+                relacion.FechaDeActualizacion = DateTime.Now;
             }
         }
 
         public Moneda ObtenerMoneda(string moneda)
         {
-            if (!Monedas.TryGetValue(moneda, out Moneda retorno))
+            var retorno = Repositorio.Obtener<Moneda>(x => x.Nombre == moneda);
+            if (retorno == null)
             {
-                retorno = new Moneda(moneda);
-                Monedas.Add(moneda, retorno);
+                retorno = new Moneda() { Nombre = moneda };
+                Repositorio.Agregar(retorno);                
             }
             return retorno;
-        }
-
-        public void Limpiar(string relacionName)
-        {
-            RelacionesEntreMonedas.TryGetValue(relacionName, out Relacion relacion);
-            if (relacion != null)
-            {
-                relacion.Limpiar();
-            }
         }
 
         public void NotificarPaginas(int v)
@@ -152,9 +107,9 @@ namespace Servicios.Imp
             Estado.Paginas = v;
         }
 
-        public void NotificarAvance()
+        public void NotificarAvance(string url)
         {
-            Estado.RelacionesActualizadas += Estado.CantidadDeRelaciones / Estado.Paginas;
+            Estado.RelacionesActualizadas += url.Count(f => f == '-');
         }
         #endregion
     }

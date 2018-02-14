@@ -1,13 +1,10 @@
-﻿namespace Dominio.Entidades
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Dominio.Entidades
 {
     public class Moneda
     {
-        public string Nombre { get; set; }
-
-        public Moneda(string nombre)
-        {
-            Nombre = nombre;
-        }
-        
+        [Key]
+        public string Nombre { get; set; }        
     }
 }

@@ -1,68 +1,48 @@
-﻿using Dominio.Helper;
+﻿
+using Dominio.Dto;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Dominio.Entidades
 {
-    public class Relacion : IComparable<Relacion>
+    public class Relacion
     {
-        public Moneda Principal { get;}
-        public Moneda Secundaria { get; }
-        private List<Orden> Compras { get; }
-        private List<Orden> Ventas { get; }
+        [Key]
+        public string Nombre { get; set; }
+        public Moneda Principal { get; set; }
+        public Moneda Secundaria { get; set; }
+        public DateTime FechaDeActualizacion { get; set; }        
+        
         public decimal MayorPrecioDeVentaAjecutada { get; set; }
         public decimal Volumen { get; set; }
         public decimal Compra { get; set; }
         public decimal Venta { get; set; }
-        public string Nombre { get { return Principal.Nombre.ToLower() + "_" + Secundaria.Nombre.ToLower(); } }
-        public decimal PruebaDelBitcoin { get; set; }
-        public decimal PruebaDelBitcoinRealista { get; set; }
-        public decimal DeltaEjecutado
+        public decimal DeltaEjecutado { get; set; }
+        public decimal DeltaActual { get; set; }
+
+        public void CalcularDeltas()
         {
-            get
-            {
-                if (MayorPrecioDeVentaAjecutada == 0 || Compra == 0 || Volumen == 0) return 0;
-                return Math.Round((MayorPrecioDeVentaAjecutada - Compra) * 100 / (MayorPrecioDeVentaAjecutada == 0 ? 1 : MayorPrecioDeVentaAjecutada), 0);
-            }
+            DeltaEjecutado = Math.Round((MayorPrecioDeVentaAjecutada - Compra) * 100 / (MayorPrecioDeVentaAjecutada == 0 ? 1 : MayorPrecioDeVentaAjecutada), 0);
+            DeltaActual = Math.Round((Venta - Compra) * 100 / (Venta == 0 ? 1 : Venta), 0);
         }
 
-        public decimal DeltaActual {
-            get
-            {
-                return Math.Round((Venta - Compra) * 100 / (Venta == 0 ? 1 : Venta), 0);
-            }
-        }
-
-        public Relacion(Moneda principal, Moneda secundaria)
-        {
-            Principal = principal;
-            Secundaria = secundaria;
-            Compras = new List<Orden>();
-            Ventas = new List<Orden>();
-        }
+        [NotMapped]
+        public ICollection<Orden> Compras { get; }
+        [NotMapped]
+        public ICollection<Orden> Ventas { get; }
 
         public void AgregarOrden(Orden orden)
         {
             if (orden.EsDeVenta)
             {
-                Ventas.AddSorted(orden);
+                Ventas.Add(orden);
             }
             else
             {
-                Compras.AddSorted(orden);
+                Compras.Add(orden);
             }
-        }
-
-        public void Limpiar()
-        {
-            Compras.Clear();
-            Ventas.Clear();
-        }
-
-        public int CompareTo(Relacion other)
-        {
-            return DeltaEjecutado > other.DeltaEjecutado ? -1 : (DeltaEjecutado < other.DeltaEjecutado ? 1 : 0);
         }
     }
 }

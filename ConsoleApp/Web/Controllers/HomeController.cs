@@ -1,39 +1,66 @@
-﻿using Ninject.Extensions.Logging;
+﻿using Dominio.Entidades;
+using Ninject.Extensions.Logging;
+using Repositorio;
 using Servicios.Interfaces;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Web.Mvc;
 
 namespace Web.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : BaseController
     {
-        public HomeController(ILogger log, IOperador servicio)
+        public HomeController(ILogger log, IOperador servicio, IEstadoOperador estadoOperador, IRepositorio repositorio)
         {
             Log = log;
             Servicio = servicio;
+            EstadoOperador = estadoOperador;
         }
 
         public ILogger Log { get; }
         public IOperador Servicio { get; }
+        public IEstadoOperador EstadoOperador { get; }
 
         public ActionResult Index()
         {
-            ViewBag.Relaciones = Servicio.ListarRelacionesReelevantes();
-            ViewBag.Estado = Servicio.ObtenerEstado();
-
             return View();
         }
 
-        public int ObtenerCantidadActualizada()
+        public JsonResult ActualizarServidor()
         {
-            return Servicio.ObtenerEstado().RelacionesActualizadas;
+            if (!EstadoOperador.UpdateEnProgreso)
+            {
+                Task.Run(() => Servicio.ActualizarOrdenes());
+            }
+            return SuccessResponse("ok");
         }
 
-        public ActionResult Actualizar()
+        public JsonResult ListarRelaciones()
         {
-            Task.Run(() => Servicio.ActualizarOrdenes());
-            return RedirectToAction("Index");
+            return SuccessResponse(Servicio.ListarRelaciones().ToList());
         }
+
+        public JsonResult ObtenerEstadoServidor()
+        {
+            return SuccessResponse(EstadoOperador);
+        }
+
+        public JsonResult CrearJugada(Jugada jugada)
+        {
+            return null;
+        }
+
+        public JsonResult ActualizarJugada(Jugada jugada)
+        {
+            return null;
+        }
+
+        public JsonResult RefrescarDatosRelacion(string relacion)
+        {
+            return SuccessResponse(new Relacion(), "ok");
+        }
+
+
 
     }
 }
