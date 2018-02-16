@@ -1,0 +1,44 @@
+﻿
+
+        <div class="row">
+            <div class="col-xs-6">
+                <input data-bind="value: RelacionSeleccionada, valueUpdate: 'afterkeydown'" type="text" class="form-control" list="relaciones" />
+                <datalist id="relaciones">
+                    <!-- ko foreach: RelacionesFiltradas -->
+                    <option data-bind="value: Nombre"></option>
+                    <!-- /ko -->
+                </datalist>
+
+                @*<input data-bind="value: Relacion.Nombre" type="text" class="form-control" readonly />*@
+            </div>
+            <div class="col-xs-4">
+                <!-- ko if: Comprar() -->
+                <button type="button" class="btn btn-default" data-bind="click: function(){Comprar(false);}">Buy</button>
+                <!-- /ko -->
+                <!-- ko if: !Comprar() -->
+                <button type="button" class="btn btn-default" data-bind="click: function(){Comprar(true);}">Sell</button>
+                <!-- /ko -->
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="inset clBuyForm">
+                    <div class="meta">
+                        <div class="all_title title" deluminate_imagetype="png">BUY</div>
+                        <div class="sm" id="label_bestbuy">0.00270000</div>
+                    </div>
+                    <div class="line_first">
+                        <span class="c1">Balance:</span>
+
+                    </div>
+                    <div class="line"><span>Amount:</span><div class="poles"><input name="amount" maxlength="25" type="text" value="0"><span class="currency">XFCX</span></div></div>
+                    <div class="line"><span>Price:</span><div class="poles"><input name="price" maxlength="25" type="text" value="0.00279999"><span class="currency">BTC</span></div></div>
+                    <div class="line"><span>Total:</span><div class="poles"><input name="total" maxlength="25" type="text" value="0"><span class="currency">BTC</span></div></div>
+                    <div class="line"><span>Fee (0.2%):</span><div class="poles"><input name="fee" maxlength="25" type="text" value="0.00001181" disabled=""><span class="currency">BTC</span></div></div>
+                    <div class="line"><span>Total+Fee:</span><div class="poles"><input name="totalfee" maxlength="25" type="text" value="0.00592137" disabled=""><span class="currency">BTC</span></div></div>
+                    <input type="button" class="clCreateOrder" origin="Buy" value="Buy">
+                </div>
+            </div>
+        </div>
+
+

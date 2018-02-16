@@ -27,33 +27,16 @@
         <button type="button" class="btn btn-default" data-bind="click: ActualizarServidor">Actualizar</button>
     </div>
 <!-- /ko -->
-    <div class="well">
+
+    <div class="well" data-bind="with: JugadaNueva">
         <ul class="nav nav-wizard">
-            <!-- ko foreach: JugadaNueva.Movimientos -->
+            <!-- ko foreach: Movimientos -->
             <li class="active">
                 <a>
-                    <div class="row">
-                        <div class="col-xs-8">
-                            <input data-bind="value: Relacion.Nombre" type="text" class="form-control" readonly />
-                        </div>
-                    </div>
+                    @Html.Partial("MovimientoActivo")
                 </a>
             </li>
             <!-- /ko -->
-            <li class="active">
-                <a>
-                    <div class="row">
-                        <div class="col-xs-8">
-                            <input data-bind="value: JugadaNueva.RelacionSeleccionada, valueUpdate: 'afterkeydown'" type="text" class="form-control" list="relaciones" />
-                            <datalist id="relaciones">
-                                <!-- ko foreach: JugadaNueva.RelacionesFiltradas -->
-                                <option data-bind="value: Nombre"></option>
-                                <!-- /ko -->
-                            </datalist>
-                        </div>
-                    </div>
-                </a>
-            </li>
         </ul>
         <nav>
             <ul class="pager" style="margin-top:10px; margin-bottom: 0">

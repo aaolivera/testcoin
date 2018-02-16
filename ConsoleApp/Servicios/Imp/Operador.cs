@@ -97,7 +97,8 @@ namespace Servicios.Imp
             if (retorno == null)
             {
                 retorno = new Moneda() { Nombre = moneda };
-                Repositorio.Agregar(retorno);                
+                Repositorio.Agregar(retorno);
+                Repositorio.GuardarCambios();
             }
             return retorno;
         }

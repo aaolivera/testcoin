@@ -1,37 +1,45 @@
 ﻿function JugadaNueva(viewModel) {
     var self = this;
-    self.Movimientos = ko.observableArray([]);
-    self.PrimerMovimiento = null;
-    self.UltimoMovimiento = null;
-    self.RelacionSeleccionada = ko.observable();
+    var inicial = new Movimiento(self, viewModel);
+    self.Movimientos = ko.observableArray([inicial]);
+    self.PrimerMovimiento = inicial;
+    self.UltimoMovimiento = inicial;
+
+
+    self.AgregarMovimiento = function(movimiento) {
+        self.Movimientos.push(self.UltimoMovimiento);
+        //valido
+        self.UltimoMovimiento = movimiento;
+    }
+
+}
+
+function Movimiento(jugada, viewModel) {
+    var self = this;
+    self.Relacion = ko.observable();
+    self.Confirmado = ko.observable(false);
+    self.Comprar = ko.observable(true);
     
 
+
     self.RelacionesFiltradas = ko.observableArray(viewModel.Relaciones());
+    self.RelacionSeleccionada = ko.observable();
     self.Filtro = ko.computed(function () {
         var filtro = self.RelacionSeleccionada();
         var i = 0;
         var resultado = ko.utils.arrayFilter(viewModel.Relaciones(), function (prod) {
             if (i === 20) return false;
-            var r = MatchPF(prod.Nombre, filtro) && (self.UltimoMovimiento === null || (self.UltimoMovimiento !== null && prod.Nombre != self.UltimoMovimiento.Relacion.Nombre && (MatchPF(prod.Nombre, self.UltimoMovimiento.Relacion.Principal) || MatchPF(prod.Nombre, self.UltimoMovimiento.Relacion.Secundaria))));
+            var r = MatchPF(prod.Nombre, filtro);
+                //&& (self.UltimoMovimiento === null || (self.UltimoMovimiento !== null && prod.Nombre != self.UltimoMovimiento.Relacion.Nombre && (MatchPF(prod.Nombre, self.UltimoMovimiento.Relacion.Principal) || MatchPF(prod.Nombre, self.UltimoMovimiento.Relacion.Secundaria))));
             if (r != null && r != false) i++;
             return r;
         });
         if (resultado.length === 1) {
-            self.UltimoMovimiento = new Movimiento(resultado[0]);
-            if (self.PrimerMovimiento === null) {
-                self.PrimerMovimiento = self.UltimoMovimiento;
-            }
-            self.Movimientos.push(self.UltimoMovimiento);
-            self.RelacionSeleccionada(null);
+            self.Relacion(resultado[0]);
         } else {
             self.RelacionesFiltradas(resultado);
         }
-    }).extend({throttle: 250});
-}
-
-function Movimiento(relacion) {
-    var self = this;
-    self.Relacion = relacion;
+    }).extend({ throttle: 250 });
 }
 
 function Relacion(datos) {
