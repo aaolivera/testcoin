@@ -1,44 +1,68 @@
-﻿
-
-        <div class="row">
-            <div class="col-xs-6">
-                <input data-bind="value: RelacionSeleccionada, valueUpdate: 'afterkeydown'" type="text" class="form-control" list="relaciones" />
-                <datalist id="relaciones">
-                    <!-- ko foreach: RelacionesFiltradas -->
-                    <option data-bind="value: Nombre"></option>
-                    <!-- /ko -->
-                </datalist>
-
-                @*<input data-bind="value: Relacion.Nombre" type="text" class="form-control" readonly />*@
-            </div>
-            <div class="col-xs-4">
-                <!-- ko if: Comprar() -->
-                <button type="button" class="btn btn-default" data-bind="click: function(){Comprar(false);}">Buy</button>
+﻿        
+<div class="buy_box">
+    <div class="inset" style="width: 200px">
+        <div class="input-group">
+            <input class="form-control input-xs" id="pair" data-bind="value: RelacionEscrita, valueUpdate: 'afterkeydown', enable: Relacion() == null" type="text" list="relaciones" />
+            <datalist id="relaciones">
+                <!-- ko foreach: RelacionesFiltradas -->
+                <option data-bind="value: Nombre"></option>
                 <!-- /ko -->
-                <!-- ko if: !Comprar() -->
-                <button type="button" class="btn btn-default" data-bind="click: function(){Comprar(true);}">Sell</button>
-                <!-- /ko -->
-            </div>
+            </datalist>
+            <span class="input-group-btn">
+                <button href="#" class="btn btn-sq-xs btn-info" data-bind="click: ConfirmarRelacion(), enable: Relacion() == null">
+                    <i class="glyphicon glyphicon-ok-circle"></i>
+                </button>
+            </span>
         </div>
-        <div class="row">
-            <div class="col-xs-12">
-                <div class="inset clBuyForm">
-                    <div class="meta">
-                        <div class="all_title title" deluminate_imagetype="png">BUY</div>
-                        <div class="sm" id="label_bestbuy">0.00270000</div>
-                    </div>
-                    <div class="line_first">
-                        <span class="c1">Balance:</span>
-
-                    </div>
-                    <div class="line"><span>Amount:</span><div class="poles"><input name="amount" maxlength="25" type="text" value="0"><span class="currency">XFCX</span></div></div>
-                    <div class="line"><span>Price:</span><div class="poles"><input name="price" maxlength="25" type="text" value="0.00279999"><span class="currency">BTC</span></div></div>
-                    <div class="line"><span>Total:</span><div class="poles"><input name="total" maxlength="25" type="text" value="0"><span class="currency">BTC</span></div></div>
-                    <div class="line"><span>Fee (0.2%):</span><div class="poles"><input name="fee" maxlength="25" type="text" value="0.00001181" disabled=""><span class="currency">BTC</span></div></div>
-                    <div class="line"><span>Total+Fee:</span><div class="poles"><input name="totalfee" maxlength="25" type="text" value="0.00592137" disabled=""><span class="currency">BTC</span></div></div>
-                    <input type="button" class="clCreateOrder" origin="Buy" value="Buy">
+        <div class="form-horizontal" data-bind="visible: Relacion() != null">
+            <div class="form-group"style="margin-bottom:0">
+                <h6 class="col-sm-12" data-bind="with: Relacion" >Amount(<!-- ko text: Principal.toUpperCase() --><!-- /ko -->):</h6>
+                <div class="col-sm-6">
+                    <input class="form-control input-xs" data-bind="value: AmountCompra, event:{ change: AmountCompraChanged}" type="text" >
+                </div>
+                <div class="col-sm-6">
+                    <input class="form-control input-xs" data-bind="value: AmountVenta, event:{ change: AmountVentaChanged}" type="text" >
                 </div>
             </div>
+            <div class="form-group" style="margin-bottom:0" data-bind="with: Relacion" >
+                <h6 class="col-sm-12" >Price(<!-- ko text: Secundaria.toUpperCase() --><!-- /ko -->):</h6>
+                <div class="col-sm-6">
+                    <input class="form-control input-xs" data-bind="value: Venta.toFixed(8)" type="text">
+                </div>
+                <div class="col-sm-6">
+                    <input class="form-control input-xs" data-bind="value: Compra.toFixed(8)" type="text">
+                </div>
+            </div>
+            <!-- ko if: Comprar() -->
+            <div class="form-group" >
+                <h6 class="col-sm-12" data-bind="with: Relacion">Total+Fee(<!-- ko text: Secundaria.toUpperCase() --><!-- /ko -->):</h6>
+                <div class="col-sm-6">
+                    <input class="form-control input-xs" data-bind="value: TotalCompra, event:{ change: TotalCompraChanged}" type="text">
+                </div>
+                <div class="col-sm-6">
+                    <input class="form-control input-xs" data-bind="value: TotalVenta, event:{ change: TotalVentaChanged}" type="text">
+                </div>
+            </div>
+            <div class="text-center">
+                <input type="button" class="btn btn-info btn-xs" data-bind="click: function(){Comprar(false);}" origin="Buy" value="Buy">
+            </div>
+            <!-- /ko -->
+            <!-- ko if: !Comprar() -->
+            <div class="form-group" >
+                <h6 class="col-sm-12" data-bind="with: Relacion">Total-Fee(<!-- ko text: Secundaria.toUpperCase() --><!-- /ko -->):</h6>
+                <div class="col-sm-6">
+                    <input class="form-control input-xs" data-bind="value: TotalCompra, event:{ change: TotalCompraChanged}" type="text">
+                </div>
+                <div class="col-sm-6">
+                    <input class="form-control input-xs" data-bind="value: TotalVenta, event:{ change: TotalVentaChanged}" type="text">
+                </div>
+            </div>
+            <div class="text-center">
+                <input type="button" class="btn btn-info btn-xs" data-bind="click: function(){Comprar(true);}" origin="Sell" value="Sell">
+            </div>
+            <!-- /ko -->
         </div>
+    </div>    
+</div>
 
 

@@ -13,7 +13,7 @@ namespace Dominio.Entidades
         public string Nombre { get; set; }
         public Moneda Principal { get; set; }
         public Moneda Secundaria { get; set; }
-        public DateTime FechaDeActualizacion { get; set; }        
+        public DateTime FechaDeActualizacion { get; set; }
         
         public decimal MayorPrecioDeVentaAjecutada { get; set; }
         public decimal Volumen { get; set; }

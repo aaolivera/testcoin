@@ -32,9 +32,15 @@ namespace Repositorio
             modelBuilder.Conventions.Remove<OneToManyCascadeDeleteConvention>();
 
             //Se mapean todas las entidades bajo el namespace Molinos.Scato.Dominio.Entidades      
-            MapearAssemblyDe<Moneda>(modelBuilder, x => x.Namespace == typeof(Moneda).Namespace, 
-                excluir: null);
-        }
+            MapearAssemblyDe<Moneda>(modelBuilder, x => x.Namespace == typeof(Moneda).Namespace, excluir: null);
+
+            modelBuilder.Entity<Relacion>().Property(c => c.MayorPrecioDeVentaAjecutada).HasPrecision(30, 8);
+            modelBuilder.Entity<Relacion>().Property(c => c.Volumen).HasPrecision(30, 8);
+            modelBuilder.Entity<Relacion>().Property(c => c.Compra).HasPrecision(30, 8);
+            modelBuilder.Entity<Relacion>().Property(c => c.Venta).HasPrecision(30, 8);
+            modelBuilder.Entity<Relacion>().Property(c => c.DeltaEjecutado).HasPrecision(30, 8);
+            modelBuilder.Entity<Relacion>().Property(c => c.DeltaActual).HasPrecision(30, 8);
+    }
 
         private void MapearAssemblyDe<TEntidad>(DbModelBuilder modelBuilder, Predicate<Type> incluir, Predicate<Type> excluir)
         {

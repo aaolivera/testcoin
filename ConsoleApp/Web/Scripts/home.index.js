@@ -2,30 +2,38 @@
     var self = this;
     var inicial = new Movimiento(self, viewModel);
     self.Movimientos = ko.observableArray([inicial]);
-    self.PrimerMovimiento = inicial;
-    self.UltimoMovimiento = inicial;
 
 
     self.AgregarMovimiento = function(movimiento) {
         self.Movimientos.push(self.UltimoMovimiento);
-        //valido
-        self.UltimoMovimiento = movimiento;
     }
 
 }
 
 function Movimiento(jugada, viewModel) {
     var self = this;
-    self.Relacion = ko.observable();
+    self.MovimientoSiguiente = ko.observable(null);
     self.Confirmado = ko.observable(false);
-    self.Comprar = ko.observable(true);
-    
+    self.Comprar = ko.observable(true);    
+    self.Relacion = ko.observable(null);
 
+    self.AmountCompra = ko.observable(0);
+    self.AmountVenta = ko.observable(0);
+
+    self.TotalCompra = ko.observable(0);
+    self.TotalVenta = ko.observable(0);
 
     self.RelacionesFiltradas = ko.observableArray(viewModel.Relaciones());
+    self.RelacionEscrita = ko.observable();
     self.RelacionSeleccionada = ko.observable();
+    self.ConfirmarRelacion = function () {
+        setTimeout(function () {
+            self.Relacion(self.RelacionSeleccionada());
+        }, 251);
+        
+    }
     self.Filtro = ko.computed(function () {
-        var filtro = self.RelacionSeleccionada();
+        var filtro = self.RelacionEscrita();
         var i = 0;
         var resultado = ko.utils.arrayFilter(viewModel.Relaciones(), function (prod) {
             if (i === 20) return false;
@@ -35,11 +43,32 @@ function Movimiento(jugada, viewModel) {
             return r;
         });
         if (resultado.length === 1) {
-            self.Relacion(resultado[0]);
+            self.RelacionSeleccionada(resultado[0]);
         } else {
             self.RelacionesFiltradas(resultado);
         }
     }).extend({ throttle: 250 });
+    
+    self.AmountCompraChanged = function (obj, event) {
+        self.AmountVenta(self.AmountCompra());
+        self.TotalCompra((self.AmountCompra() * self.Relacion().Compra).toFixed(8));
+        self.TotalVenta((self.AmountVenta() * self.Relacion().Venta).toFixed(8));
+    }
+    self.AmountVentaChanged = function (obj, event) {
+        self.AmountCompra(self.AmountVenta());
+        self.TotalCompra((self.AmountCompra() * self.Relacion().Compra).toFixed(8));
+        self.TotalVenta((self.AmountVenta() * self.Relacion().Venta).toFixed(8));
+    }
+    self.TotalCompraChanged = function (obj, event) {
+        self.TotalVenta(self.TotalCompra());
+        self.AmountCompra((self.TotalCompra() * self.Relacion().Compra).toFixed(8));
+        self.AmountVenta((self.TotalVenta() * self.Relacion().Venta).toFixed(8));
+    }
+    self.TotalVentaChanged = function (obj, event) {
+        self.TotalCompra(self.TotalVenta());
+        self.AmountCompra((self.TotalCompra() * self.Relacion().Compra).toFixed(8));
+        self.AmountVenta((self.TotalVenta() * self.Relacion().Venta).toFixed(8));
+    }
 }
 
 function Relacion(datos) {
@@ -47,11 +76,11 @@ function Relacion(datos) {
     self.Nombre = datos.Nombre;
     self.Principal = datos.Nombre.split('_')[0];
     self.Secundaria = datos.Nombre.split('_')[1];
-    self.FechaDeActualizacion = datos.FechaDeActualizacion;   
-    self.MayorPrecioDeVentaAjecutada = datos.MayorPrecioDeVentaAjecutada;
+    self.FechaDeActualizacion = datos.FechaDeActualizacion;    
     self.Volumen = datos.Volumen;
-    self.Compra = datos.Compra;
-    self.Venta = datos.Venta;
+    self.MayorPrecioDeVentaAjecutada = Number(datos.MayorPrecioDeVentaAjecutada);
+    self.Compra = Number(datos.Compra);
+    self.Venta = Number(datos.Venta);
     self.DeltaEjecutado = datos.DeltaEjecutado;
     self.DeltaActual = datos.DeltaActual;
 }
