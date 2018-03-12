@@ -1,9 +1,9 @@
 ﻿        
 <div class="buy_box">
-    <div class="inset" style="width: 200px">
+    <div class="inset" style="width: 180px">
         <div class="input-group">
-            <input class="form-control input-xs" id="pair" data-bind="value: RelacionEscrita, valueUpdate: 'afterkeydown', enable: Relacion() == null" type="text" list="relaciones" />
-            <datalist id="relaciones">
+            <input class="form-control input-xs" id="pair" data-bind="value: RelacionEscrita, valueUpdate: 'afterkeydown', enable: Relacion() == null, attr: { list: $index() + 'relaciones' }" type="text" list="relaciones" />
+            <datalist data-bind="attr: { id: $index() + 'relaciones' }">
                 <!-- ko foreach: RelacionesFiltradas -->
                 <option data-bind="value: Nombre"></option>
                 <!-- /ko -->
@@ -43,8 +43,11 @@
                     <input class="form-control input-xs" data-bind="value: TotalVenta, event:{ change: TotalVentaChanged}" type="text">
                 </div>
             </div>
-            <div class="text-center">
-                <input type="button" class="btn btn-info btn-xs" data-bind="click: function(){Comprar(false);}" origin="Buy" value="Buy">
+            <div class="text-right">
+                <button type="button" class="btn btn-info btn-xs" data-bind="click: function(){Comprar(false);}, visible: EsInicial() && MovimientoSiguiente() == null">Buy</button>
+                <button type="button" class="btn btn-info btn-xs" data-bind="click: Siguiente, visible: MovimientoSiguiente() == null, css: { 'pull-right': EsInicial() && MovimientoSiguiente() == null }">
+                    <i class="glyphicon glyphicon-arrow-right"></i> <i class="glyphicon glyphicon-arrow-right"></i>
+                </button>
             </div>
             <!-- /ko -->
             <!-- ko if: !Comprar() -->
@@ -57,8 +60,11 @@
                     <input class="form-control input-xs" data-bind="value: TotalVenta, event:{ change: TotalVentaChanged}" type="text">
                 </div>
             </div>
-            <div class="text-center">
-                <input type="button" class="btn btn-info btn-xs" data-bind="click: function(){Comprar(true);}" origin="Sell" value="Sell">
+            <div class="text-right">
+                <button type="button" class="btn btn-info btn-xs" data-bind="click: function(){Comprar(true);}, visible: EsInicial() && MovimientoSiguiente() == null">Sell</button>
+                <button type="button" class="btn btn-info btn-xs" data-bind="click: Siguiente, visible: MovimientoSiguiente() == null, css: { 'pull-right': EsInicial() && MovimientoSiguiente() == null }">
+                    <i class="glyphicon glyphicon-arrow-right"></i> <i class="glyphicon glyphicon-arrow-right"></i>
+                </button>
             </div>
             <!-- /ko -->
         </div>

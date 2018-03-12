@@ -1,34 +1,74 @@
 ﻿function JugadaNueva(viewModel) {
     var self = this;
-    var inicial = new Movimiento(self, viewModel);
-    self.Movimientos = ko.observableArray([inicial]);
+    self.Inicial = new Movimiento(self, null, viewModel);
+    self.Inicial.EsInicial(true);
+    self.Movimientos = ko.observableArray([self.Inicial]);
 
 
     self.AgregarMovimiento = function(movimiento) {
-        self.Movimientos.push(self.UltimoMovimiento);
+        self.Movimientos.push(movimiento);
     }
 
 }
 
-function Movimiento(jugada, viewModel) {
+function Movimiento(jugada, movimientoAnterior, viewModel) {
     var self = this;
     self.MovimientoSiguiente = ko.observable(null);
+    self.MovimientoAnterior = ko.observable(movimientoAnterior);
     self.Confirmado = ko.observable(false);
     self.Comprar = ko.observable(true);    
     self.Relacion = ko.observable(null);
 
+    self.EsInicial = ko.observable(false);
+
     self.AmountCompra = ko.observable(0);
     self.AmountVenta = ko.observable(0);
-
     self.TotalCompra = ko.observable(0);
     self.TotalVenta = ko.observable(0);
 
-    self.RelacionesFiltradas = ko.observableArray(viewModel.Relaciones());
+    //Siguiente
+    self.Siguiente = function () {
+        var nuevoMovimiento = new Movimiento(jugada, self, viewModel);
+        jugada.AgregarMovimiento(nuevoMovimiento);
+
+        self.MovimientoSiguiente(nuevoMovimiento);
+        self.Confirmado(true);
+    }
+    //
+    //Cargar Pair
+    self.RelacionesFiltradas = ko.observableArray([]);
     self.RelacionEscrita = ko.observable();
     self.RelacionSeleccionada = ko.observable();
     self.ConfirmarRelacion = function () {
         setTimeout(function () {
             self.Relacion(self.RelacionSeleccionada());
+            if (self.MovimientoAnterior() != null) {
+                self.Comprar(!(self.MovimientoAnterior().Relacion().Principal == self.Relacion().Principal || self.MovimientoAnterior().Relacion().Secundaria == self.Relacion().Principal));
+                if (self.MovimientoAnterior().Relacion().Principal == self.Relacion().Principal) {
+                    self.AmountCompra((self.MovimientoAnterior().AmountCompra()));
+                    self.AmountVenta((self.MovimientoAnterior().AmountVenta()));
+                    self.TotalCompra((self.AmountCompra() * self.Relacion().Compra).toFixed(8));
+                    self.TotalVenta((self.AmountVenta() * self.Relacion().Venta).toFixed(8));
+                }
+                if (self.MovimientoAnterior().Relacion().Secundaria == self.Relacion().Principal) {
+                    self.AmountCompra((self.MovimientoAnterior().TotalCompra()));
+                    self.AmountVenta((self.MovimientoAnterior().TotalVenta()));
+                    self.TotalCompra((self.AmountCompra() * self.Relacion().Compra).toFixed(8));
+                    self.TotalVenta((self.AmountVenta() * self.Relacion().Venta).toFixed(8));
+                }
+                if (self.MovimientoAnterior().Relacion().Principal == self.Relacion().Secundaria) {
+                    self.TotalCompra((self.MovimientoAnterior().AmountCompra()));
+                    self.TotalVenta((self.MovimientoAnterior().AmountVenta()));
+                    self.AmountCompra((self.TotalCompra() / self.Relacion().Compra).toFixed(8));
+                    self.AmountVenta((self.TotalVenta() / self.Relacion().Venta).toFixed(8));
+                }
+                if (self.MovimientoAnterior().Relacion().Secundaria == self.Relacion().Secundaria) {
+                    self.TotalCompra((self.MovimientoAnterior().TotalCompra()));
+                    self.TotalVenta((self.MovimientoAnterior().TotalVenta()));
+                    self.AmountCompra((self.TotalCompra() / self.Relacion().Compra).toFixed(8));
+                    self.AmountVenta((self.TotalVenta() / self.Relacion().Venta).toFixed(8));
+                }
+            }
         }, 251);
         
     }
@@ -37,8 +77,8 @@ function Movimiento(jugada, viewModel) {
         var i = 0;
         var resultado = ko.utils.arrayFilter(viewModel.Relaciones(), function (prod) {
             if (i === 20) return false;
-            var r = MatchPF(prod.Nombre, filtro);
-                //&& (self.UltimoMovimiento === null || (self.UltimoMovimiento !== null && prod.Nombre != self.UltimoMovimiento.Relacion.Nombre && (MatchPF(prod.Nombre, self.UltimoMovimiento.Relacion.Principal) || MatchPF(prod.Nombre, self.UltimoMovimiento.Relacion.Secundaria))));
+            var anterior = self.MovimientoAnterior();
+            var r = MatchPF(prod.Nombre, filtro) && (anterior == null || (anterior != null && anterior.Comprar() && MatchPF(prod.Nombre, anterior.Relacion().Principal)) || (anterior != null && !anterior.Comprar() && MatchPF(prod.Nombre, anterior.Relacion().Secundaria)));
             if (r != null && r != false) i++;
             return r;
         });
@@ -48,7 +88,8 @@ function Movimiento(jugada, viewModel) {
             self.RelacionesFiltradas(resultado);
         }
     }).extend({ throttle: 250 });
-    
+    //
+    //Calcular amount y total
     self.AmountCompraChanged = function (obj, event) {
         self.AmountVenta(self.AmountCompra());
         self.TotalCompra((self.AmountCompra() * self.Relacion().Compra).toFixed(8));
@@ -61,14 +102,15 @@ function Movimiento(jugada, viewModel) {
     }
     self.TotalCompraChanged = function (obj, event) {
         self.TotalVenta(self.TotalCompra());
-        self.AmountCompra((self.TotalCompra() * self.Relacion().Compra).toFixed(8));
-        self.AmountVenta((self.TotalVenta() * self.Relacion().Venta).toFixed(8));
+        self.AmountCompra((self.TotalCompra() / self.Relacion().Compra).toFixed(8));
+        self.AmountVenta((self.TotalVenta() / self.Relacion().Venta).toFixed(8));
     }
     self.TotalVentaChanged = function (obj, event) {
         self.TotalCompra(self.TotalVenta());
-        self.AmountCompra((self.TotalCompra() * self.Relacion().Compra).toFixed(8));
-        self.AmountVenta((self.TotalVenta() * self.Relacion().Venta).toFixed(8));
+        self.AmountCompra((self.TotalCompra() / self.Relacion().Compra).toFixed(8));
+        self.AmountVenta((self.TotalVenta() / self.Relacion().Venta).toFixed(8));
     }
+    //
 }
 
 function Relacion(datos) {
@@ -141,7 +183,7 @@ function viewModel() {
     RefrescarEstado(self);
     setInterval(function () {
         RefrescarEstado(self);
-    }, 500);
+    }, 2000);
 }
 
 $(document).ready(function () {
