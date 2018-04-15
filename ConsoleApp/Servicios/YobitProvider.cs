@@ -49,7 +49,7 @@ namespace Providers
             }
         }
         
-        public void CargarMonedas(Mercado mercado)
+        public void CargarMonedas(Mercado mercado, List<string> exclude)
         {
             dynamic response = WebProvider.DownloadPage(info);
 
@@ -57,7 +57,10 @@ namespace Providers
             foreach (var relacion in response.pairs)
             {
                 var monedas = relacion.Name.Split('_');
-                mercado.AgregarRelacionEntreMonedas(monedas[0], monedas[1]);
+                if(!exclude.Contains(monedas[0]) && !exclude.Contains(monedas[1]))
+                {
+                    mercado.AgregarRelacionEntreMonedas(monedas[0], monedas[1]);
+                }
             }
         }
 
@@ -71,17 +74,18 @@ namespace Providers
 
         public bool HayOrdenesActivas(string relacion)
         {
-            var body = $"method=ActiveOrders&pair={relacion}&nonce={{0}}";
-            dynamic response = PostPage(priv, body);
-            var resultado = (response != null && response["return"] != null);
-            return resultado;
+            //var body = $"method=ActiveOrders&pair={relacion}&nonce={{0}}";
+            //dynamic response = PostPage(priv, body);
+            //var resultado = (response != null && response["return"] != null);
+            //return resultado;
+            return false;
         }
 
         public decimal EjecutarOrden(Orden i, string relacion)
         {
             var body = $"method=Trade&pair={relacion}&type={(i.EsDeVenta ? "buy" : "sell")}&rate={i.PrecioUnitario.ToString("0.########", CultureInfo.InvariantCulture)}&amount={i.Cantidad.ToString("0.########", CultureInfo.InvariantCulture)}&nonce={{0}}";
             System.Console.WriteLine(body);
-            PostPage(priv, body);
+            //PostPage(priv, body);
             return i.EsDeVenta ? i.Cantidad : Decimal.Round((i.Cantidad * i.PrecioUnitario) - (0.2M / 100 * (i.Cantidad * i.PrecioUnitario)));
             
         }

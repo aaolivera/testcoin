@@ -11,11 +11,11 @@ namespace Dominio.Entidades
         private Dictionary<string, Moneda> Monedas { get; } = new Dictionary<string, Moneda>();
         private HashSet<string> RelacionesEntreMonedas { get; } = new HashSet<string>();
 
-        public Mercado(List<IProvider> providers)
+        public Mercado(List<IProvider> providers, List<string> exclude)
         {
             foreach(var p in providers)
             {
-                p.CargarMonedas(this);
+                p.CargarMonedas(this, exclude);
                 Providers.Add(p);
             }
         }
@@ -26,6 +26,11 @@ namespace Dominio.Entidades
             {
                 p.CargarOrdenes(this);
             }
+        }
+
+        public List<Moneda> ListarMonedasInfimas()
+        {
+            return Monedas.Values.Where(x => x.OrdenesDeCompraPorMoneda.Values.Any(y => y.FirstOrDefault()?.PrecioUnitario == 0.00000001M)).ToList();
         }
         
         public List<Moneda> ObtenerOperacionOptima(string origen, string destino, decimal cantidad, out string ejecucion)
@@ -105,7 +110,7 @@ namespace Dominio.Entidades
                     Thread.Sleep(1500);
                 }
 
-                cantidad = provider.ConsultarSaldo(siguiente.Nombre);
+                //cantidad = provider.ConsultarSaldo(siguiente.Nombre);
                 cantidad = cantidadResultado;
             }
         }

@@ -10,7 +10,7 @@ namespace ConsoleAppCaminoOptimo
         static void Main(string[] args)
         {
             var providers = new List<IProvider> { new YobitProvider() };
-            var mercado = new Mercado(providers);
+            var mercado = new Mercado(providers, new List<string>{ });
             mercado.ActualizarOrdenes();
 
             while (true)

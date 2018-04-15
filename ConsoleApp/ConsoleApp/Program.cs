@@ -15,8 +15,14 @@ namespace ConsoleApp
             while (true)
             {
                 var providers = new List<IProvider> { new YobitProvider() };
-                var mercado = new Mercado(providers);
+                var mercado = new Mercado(providers, new List<string>{ "dash" });
                 mercado.ActualizarOrdenes();
+                
+                //foreach (var moneda in mercado.ListarMonedasInfimas())
+                //{
+                //    System.Console.WriteLine(moneda.Nombre + ": " + string.Join(",", moneda.OrdenesDeCompraPorMoneda.Keys.Select(y =>y.Nombre))); 
+                //}
+                //System.Console.ReadLine();
                 var monedas = mercado.ObtenerMonedas();
                 var monedaPilar = "btc";
 
@@ -62,7 +68,7 @@ namespace ConsoleApp
                         todos.AddRange(movimientosVuelta);
                         var porcentaje = (((cantidadVuelta - inicial) * 100) / inicial);
                         var cantidadMovimientos = todos.Count - 1;
-                        if (porcentaje >= 4 && cantidadMovimientos <= 4)
+                        if (porcentaje >= 1 && cantidadMovimientos <= 4)
                         {
                             var texto = $"{(cantidadMovimientos).ToString("00")}|{porcentaje.ToString("00.00")}|";
 
