@@ -112,19 +112,16 @@ namespace Providers
         {
             Console.WriteLine($"Iniciando descarga {urls.Count}");
             var retorno = new List<dynamic>();
-            var tamaniobloque = Convert.ToInt32(Math.Ceiling((decimal)(urls.Count / (Proxys.Count * 1M))));
-            var indiceBloque = 0;
+            var bloquesDeUrls = urls.Split(Proxys.Count).ToArray();
+            //var indiceBloque = 0;
             var tasks = new List<Task<Bloque>>();
 
             Stopwatch stopwatch = Stopwatch.StartNew();
-            foreach (var p in Proxys)
+            Console.WriteLine($"Bloques listos {Proxys.Count}");
+
+            for (var i = 0; i < Proxys.Count; i++)
             {
-                if(Proxys.Last() == p)
-                {
-                    tamaniobloque = urls.Count - indiceBloque;
-                }
-                tasks.Add(DownloadPagesAsync(urls.Skip(indiceBloque).Take(tamaniobloque).ToList(), p));
-                indiceBloque += tamaniobloque;
+                tasks.Add(DownloadPagesAsync(bloquesDeUrls[i].ToList(), Proxys[i]));
             }
             var bloques = (await Task.WhenAll(tasks.ToArray())).ToList();
             
