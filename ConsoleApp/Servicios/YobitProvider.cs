@@ -12,7 +12,21 @@ namespace Providers
         private readonly string info = @"https://yobit.net/api/3/info";
         private readonly string depth = @"https://yobit.net/api/3/depth/{0}?ignore_invalid=1";
         private readonly string priv = @"https://yobit.net/tapi/";
-        
+
+        public void Inicializar(Mercado mercado, List<string> exclude)
+        {
+            dynamic response = WebProvider.DownloadPage(info);
+            
+            foreach (var relacion in response.pairs)
+            {
+                var monedas = relacion.Name.Split('_');
+                if (!exclude.Contains(monedas[0]) && !exclude.Contains(monedas[1]))
+                {
+                    mercado.AgregarRelacionEntreMonedas(monedas[0], monedas[1]);
+                }
+            }
+        }
+
         public void CargarOrdenes(Mercado mercado)
         {
             var relaciones = mercado.ObetenerRelacionesEntreMonedas();
@@ -42,28 +56,13 @@ namespace Providers
             }
             
             //Obtengo y cargo       
-            var responses = WebProvider.DownloadPages(paginas).Result;
+            var responses = WebProvider.DownloadPages(paginas);
             foreach(var response in responses)
             {
                 CargarPaginaDeOrdenes(response, mercado);
             }
         }
         
-        public void CargarMonedas(Mercado mercado, List<string> exclude)
-        {
-            dynamic response = WebProvider.DownloadPage(info);
-
-
-            foreach (var relacion in response.pairs)
-            {
-                var monedas = relacion.Name.Split('_');
-                if(!exclude.Contains(monedas[0]) && !exclude.Contains(monedas[1]))
-                {
-                    mercado.AgregarRelacionEntreMonedas(monedas[0], monedas[1]);
-                }
-            }
-        }
-
         public decimal ConsultarSaldo(string moneda)
         {
             var body = "method=getInfo&nonce={0}";

@@ -28,31 +28,31 @@ namespace Providers
             "http://proxy9.gear.host/?url=",
             "http://proxy10.gear.host/?url=",
             "http://proxy11.gear.host/?url=",
-            "http://proxy12.gear.host/?url=",
-            "http://proxy13.gear.host/?url=",
-            "http://proxy14.gear.host/?url=",
-            "http://proxy15.gear.host/?url=",
-            "http://proxy16.gear.host/?url=",
+            //"http://proxy12.gear.host/?url=",
+            //"http://proxy13.gear.host/?url=",
+            //"http://proxy14.gear.host/?url=",
+            //"http://proxy15.gear.host/?url=",
+            //"http://proxy16.gear.host/?url=",
             "http://proxy17.gear.host/?url=",
             "http://proxy18.gear.host/?url=",
             "http://proxy19.gear.host/?url=",
             "http://proxy20.gear.host/?url=",
             "http://proxy21.gear.host/?url=",
-            "http://proxy22.gear.host/?url=",
-            "http://proxy23.gear.host/?url=",
-            "http://proxy24.gear.host/?url=",
-            "http://proxy25.gear.host/?url=",
-            "http://proxy26.gear.host/?url=",
+            //"http://proxy22.gear.host/?url=",
+            //"http://proxy23.gear.host/?url=",
+            //"http://proxy24.gear.host/?url=",
+            //"http://proxy25.gear.host/?url=",
+            //"http://proxy26.gear.host/?url=",
             "http://proxy27.gear.host/?url=",
             "http://proxy28.gear.host/?url=",
             "http://proxy29.gear.host/?url=",
             "http://proxy30.gear.host/?url=",
             "http://proxy31.gear.host/?url=",
-            "http://proxy32.gear.host/?url=",
-            "http://proxy33.gear.host/?url=",
-            "http://proxy34.gear.host/?url=",
-            "http://proxy35.gear.host/?url=",
-            "http://proxy36.gear.host/?url="
+            //"http://proxy32.gear.host/?url=",
+            //"http://proxy33.gear.host/?url=",
+            //"http://proxy34.gear.host/?url=",
+            //"http://proxy35.gear.host/?url=",
+            //"http://proxy36.gear.host/?url="
         };
 
         public static dynamic PostPage(string url, string body, Dictionary<string, string> headers)
@@ -98,24 +98,23 @@ namespace Providers
             }
             catch (Exception e)
             {
-                Console.WriteLine($"{url} - {intento} - {e.Message}");
+                //Console.WriteLine($"{url} - {intento} - {e.Message}");
                 if (intento == 4)
                 {
                     throw new Exception();
                 }
-                Thread.Sleep(1500);
+                //Thread.Sleep(1500);
                 return DownloadPage(url, intento + 1);
             }
         }
 
-        public static async Task<List<dynamic>> DownloadPages(List<string> urls)
+        public static List<dynamic> DownloadPages(List<string> urls)
         {
             Console.WriteLine($"Iniciando descarga {urls.Count}");
             var retorno = new List<dynamic>();
-            var bloquesDeUrls = urls.Split(Proxys.Count).ToArray();
-            //var indiceBloque = 0;
             var tasks = new List<Task<Bloque>>();
-
+            var bloquesDeUrls = urls.Split(Proxys.Count).ToArray();
+            
             Stopwatch stopwatch = Stopwatch.StartNew();
             Console.WriteLine($"Bloques listos {Proxys.Count}");
 
@@ -123,15 +122,17 @@ namespace Providers
             {
                 tasks.Add(DownloadPagesAsync(bloquesDeUrls[i].ToList(), Proxys[i]));
             }
-            var bloques = (await Task.WhenAll(tasks.ToArray())).ToList();
+            Console.WriteLine($"Taks Instanciados " + stopwatch.ElapsedMilliseconds * 0.001M);
+            var bloques = (Task.WhenAll(tasks).Result).ToList();
             
+
             var descargasFallidas = bloques.Where(x => x.PaginasFallidas.Any());
             if (descargasFallidas.Any())
             {
                 var paginas = bloques.SelectMany(x => x.PaginasFallidas).ToList();
                 Console.WriteLine($"Existen {paginas.Count} paginas fallidas, reprocesandolas");
                 
-                var bloqueReprocesado = new Bloque { PaginasDescargadas = DownloadPages(paginas).Result };
+                var bloqueReprocesado = new Bloque { PaginasDescargadas = DownloadPages(paginas) };
                 bloques.Add(bloqueReprocesado);
             }
             stopwatch.Stop();
@@ -141,35 +142,36 @@ namespace Providers
 
         private static async Task<Bloque> DownloadPagesAsync(List<string> urls, string proxy)
         {
-            var list = await Task.Run(() =>
+            return await Task.Run(() => DownloadPages(urls, proxy));
+        }
+
+        private static Bloque DownloadPages(List<string> urls, string proxy)
+        {
+            //Console.WriteLine($"Inicio {urls.Count} - {proxy} Obteniendo operaciones");
+            var retorno = new Bloque();
+            var n = 0;
+            try
             {
-                Console.WriteLine($"Inicio {urls.Count} - {proxy} Obteniendo operaciones");
-                var retorno = new Bloque();
-                var n = 0;
-                try
+                foreach (var url in urls)
                 {
-                    foreach (var url in urls)
+                    if (proxy == "local")
                     {
-                        if (proxy == "local")
-                        {
-                            retorno.PaginasDescargadas.Add(DownloadPage(url));
-                        }
-                        else
-                        {
-                            retorno.PaginasDescargadas.Add(DownloadPage(proxy + url));
-                        }
-                        Console.WriteLine($"{n++}/{urls.Count} - {proxy}");
+                        retorno.PaginasDescargadas.Add(DownloadPage(url));
                     }
+                    else
+                    {
+                        retorno.PaginasDescargadas.Add(DownloadPage(proxy + url));
+                    }
+                    Console.WriteLine($"{n++}/{urls.Count} - {proxy}");
                 }
-                catch
-                {
-                    Console.WriteLine($"Proxy en error: {proxy}, encolando paginas fallidas y quitando de la lista");
-                    Proxys.Remove(proxy);
-                    retorno.PaginasFallidas = urls.Skip(n + 1).ToList();
-                }                
-                return retorno;
-            });
-            return list;
+            }
+            catch
+            {
+                Console.WriteLine($"Proxy en error: {proxy}, encolando paginas fallidas y quitando de la lista");
+                Proxys.Remove(proxy);
+                retorno.PaginasFallidas = urls.Skip(n + 1).ToList();
+            }
+            return retorno;
         }
     }
 }

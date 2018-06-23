@@ -17,13 +17,15 @@ namespace ConsoleApp
                 var providers = new List<IProvider> { new YobitProvider() };
                 var mercado = new Mercado(providers, new List<string>{ "dash" });
                 mercado.ActualizarOrdenes();
-                
+                var monedas = mercado.ObtenerMonedas();
+
                 //foreach (var moneda in mercado.ListarMonedasInfimas())
                 //{
                 //    System.Console.WriteLine(moneda.Nombre + ": " + string.Join(",", moneda.OrdenesDeCompraPorMoneda.Keys.Select(y =>y.Nombre))); 
                 //}
-                //System.Console.ReadLine();
-                var monedas = mercado.ObtenerMonedas();
+                System.Console.WriteLine("Bloques descargados...");
+                System.Console.ReadLine();
+                
                 var monedaPilar = "btc";
 
                 System.Console.WriteLine("");

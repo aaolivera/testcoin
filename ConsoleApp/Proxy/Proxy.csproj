@@ -213,7 +213,9 @@
     <Content Include="ApplicationInsights.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Web.config" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>
@@ -235,21 +237,8 @@
     <Content Include="fonts\glyphicons-halflings-regular.eot" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="deploy.ps1" />
     <None Include="packages.config" />
-    <None Include="Properties\PublishProfiles\proxy10 - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy10 - Web Deploy.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy11 - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy11 - Web Deploy.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy12 - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy12 - Web Deploy.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy13 - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy13 - Web Deploy.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy14 - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy14 - Web Deploy.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy15 - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy15 - Web Deploy.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy16 - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy16 - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\proxy17 - FTP.pubxml" />
     <None Include="Properties\PublishProfiles\proxy17 - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\proxy18 - FTP.pubxml" />
@@ -260,16 +249,6 @@
     <None Include="Properties\PublishProfiles\proxy20 - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\proxy21 - FTP.pubxml" />
     <None Include="Properties\PublishProfiles\proxy21 - Web Deploy.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy22 - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy22 - Web Deploy.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy23 - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy23 - Web Deploy.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy24 - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy24 - Web Deploy.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy25 - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy25 - Web Deploy.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy26 - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy26 - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\proxy27 - FTP.pubxml" />
     <None Include="Properties\PublishProfiles\proxy27 - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\proxy28 - FTP.pubxml" />
@@ -280,24 +259,12 @@
     <None Include="Properties\PublishProfiles\proxy30 - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\proxy31 - FTP.pubxml" />
     <None Include="Properties\PublishProfiles\proxy31 - Web Deploy.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy32 - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy32 - Web Deploy.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy33 - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy33 - Web Deploy.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy34 - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy34 - Web Deploy.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy35 - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy35 - Web Deploy.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy36 - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\proxy36 - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\proxy7 - FTP.pubxml" />
     <None Include="Properties\PublishProfiles\proxy7 - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\proxy8 - FTP.pubxml" />
     <None Include="Properties\PublishProfiles\proxy8 - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\proxy9 - FTP.pubxml" />
     <None Include="Properties\PublishProfiles\proxy9 - Web Deploy.pubxml" />
-    <None Include="Properties\PublishProfiles\proxyphp1 - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\proxyphp1 - Web Deploy.pubxml" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

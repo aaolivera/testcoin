@@ -15,7 +15,7 @@ namespace Dominio.Entidades
         {
             foreach(var p in providers)
             {
-                p.CargarMonedas(this, exclude);
+                p.Inicializar(this, exclude);
                 Providers.Add(p);
             }
         }
