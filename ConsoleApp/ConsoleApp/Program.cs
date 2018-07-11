@@ -16,30 +16,31 @@ namespace ConsoleApp
             {
                 var providers = new List<IProvider> { new YobitProvider() };
                 var mercado = new Mercado(providers, new List<string>{ "dash" });
+                mercado.ActualizarMonedas();
                 mercado.ActualizarOrdenes();
-                var monedas = mercado.ObtenerMonedas();
+                //var monedas = mercado.ObtenerMonedas();
 
                 //foreach (var moneda in mercado.ListarMonedasInfimas())
                 //{
                 //    System.Console.WriteLine(moneda.Nombre + ": " + string.Join(",", moneda.OrdenesDeCompraPorMoneda.Keys.Select(y =>y.Nombre))); 
                 //}
-                System.Console.WriteLine("Bloques descargados...");
-                System.Console.ReadLine();
-                
-                var monedaPilar = "btc";
+                //System.Console.WriteLine("Bloques descargados...");
+                //System.Console.ReadLine();
 
-                System.Console.WriteLine("");
-                var inicial = 0.0001002M;
+                //var monedaPilar = "btc";
 
-                var tasks = new List<Task>();
-                foreach (var moneda in monedas)
-                {
-                    ChequearMoneda(mercado, monedaPilar, inicial, moneda.Nombre);
+                //System.Console.WriteLine("");
+                //var inicial = 0.0001002M;
 
-                    //tasks.Add(ChequearMonedaAsync(mercado, monedaPilar, inicial, moneda.Nombre));
-                }
-                System.Console.WriteLine("Buscando...");
-                Task.WaitAll(tasks.ToArray());
+                //var tasks = new List<Task>();
+                //foreach (var moneda in monedas)
+                //{
+                //    ChequearMoneda(mercado, monedaPilar, inicial, moneda.Nombre);
+
+                //    //tasks.Add(ChequearMonedaAsync(mercado, monedaPilar, inicial, moneda.Nombre));
+                //}
+                //System.Console.WriteLine("Buscando...");
+                //Task.WaitAll(tasks.ToArray());
                 System.Console.WriteLine("Fin");
                 System.Console.ReadLine();
             }

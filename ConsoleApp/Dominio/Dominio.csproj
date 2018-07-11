@@ -47,6 +47,8 @@
     <Compile Include="Helper\NavigationList.cs" />
     <Compile Include="Helper\StringExt.cs" />
     <Compile Include="Helper\ListExt.cs" />
+    <Compile Include="Interfaces\IMercado.cs" />
+    <Compile Include="Interfaces\IMercadoCargar.cs" />
     <Compile Include="Interfaces\IProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

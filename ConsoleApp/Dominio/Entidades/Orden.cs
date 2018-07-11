@@ -9,6 +9,7 @@ namespace Dominio.Entidades
         public decimal Cantidad { get; set; }
         public decimal PrecioUnitario { get; set; }
         public bool EsDeVenta { get; set; }
+        public string Relacion { get; set; }
         public int CompareTo(Orden other)
         {
             return PrecioUnitario > other.PrecioUnitario ? -1 : (PrecioUnitario < other.PrecioUnitario ? 1 : 0);

@@ -5,10 +5,11 @@ namespace Dominio.Interfaces
 {
     public interface IProvider
     {
-        void Inicializar(Mercado mercado, List<string> exclude);
-        void CargarOrdenes(Mercado mercado);
-        List<Orden> ObtenerOrdenesNecesarias(Moneda actual, Moneda siguiente, decimal inicial, out string relacion);
-        decimal EjecutarOrden(Orden i, string relacion);
+        void ActualizarMonedas(IMercadoCargar mercado, List<string> exclude);
+        void ActualizarOrdenes(IMercadoCargar mercado);
+
+        List<Orden> ObtenerOrdenesNecesarias(Moneda actual, Moneda siguiente, decimal inicial);
+        decimal EjecutarOrden(Orden i);
         decimal ConsultarSaldo(string moneda);
         bool HayOrdenesActivas(string relacion);
     }
