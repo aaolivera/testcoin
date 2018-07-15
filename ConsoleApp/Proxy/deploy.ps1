@@ -26,11 +26,13 @@ msbuild Proxy.csproj /p:DeployOnBuild=true /p:PublishProfile="proxy30 - Web Depl
 msbuild Proxy.csproj /p:DeployOnBuild=true /p:PublishProfile="proxy31 - Web Deploy" /p:Password=EHKSvtAzrCvutiYAyhmZSzfzqnv4qKFptmCfs6vnQCBn8dMw2Cd8CdG8rC8L /p:AllowUntrustedCertificate=true
 
 
-#msbuild Proxy.csproj /p:DeployOnBuild=true /p:PublishProfile="ptest - Web Deploy" /p:Password=P8N8nblb1cFi6aAvayaK1Rnilb2cZsxG9akYsFlruhL5mi8f7juuWeWoxEnl /p:AllowUntrustedCertificate=true
-#msbuild Proxy.csproj /p:DeployOnBuild=true /p:PublishProfile="ptest - Web Deploy" /p:Password=P8N8nblb1cFi6aAvayaK1Rnilb2cZsxG9akYsFlruhL5mi8f7juuWeWoxEnl /p:AllowUntrustedCertificate=true
-#msbuild Proxy.csproj /p:DeployOnBuild=true /p:PublishProfile="ptest - Web Deploy" /p:Password=P8N8nblb1cFi6aAvayaK1Rnilb2cZsxG9akYsFlruhL5mi8f7juuWeWoxEnl /p:AllowUntrustedCertificate=true
-#msbuild Proxy.csproj /p:DeployOnBuild=true /p:PublishProfile="ptest - Web Deploy" /p:Password=P8N8nblb1cFi6aAvayaK1Rnilb2cZsxG9akYsFlruhL5mi8f7juuWeWoxEnl /p:AllowUntrustedCertificate=true
-#msbuild Proxy.csproj /p:DeployOnBuild=true /p:PublishProfile="ptest - Web Deploy" /p:Password=P8N8nblb1cFi6aAvayaK1Rnilb2cZsxG9akYsFlruhL5mi8f7juuWeWoxEnl /p:AllowUntrustedCertificate=true
+msbuild Proxy.csproj /p:DeployOnBuild=true /p:PublishProfile="proxy32 - Web Deploy" /p:Password=B3As5BX2NEhsxLFnAWF2ej4Tcv7yCqMlN5hqveffqEn2dWPQtGun1kfGc48r /p:AllowUntrustedCertificate=true
+msbuild Proxy.csproj /p:DeployOnBuild=true /p:PublishProfile="proxy33 - Web Deploy" /p:Password=2YDdXR31QaiETzp2YoXWBoQ2mzTNaDw3f7e9lNbMdHq8PHk6m6X71Eubrvqn /p:AllowUntrustedCertificate=true
+msbuild Proxy.csproj /p:DeployOnBuild=true /p:PublishProfile="proxy34 - Web Deploy" /p:Password=gHvfTHCMcFAkWo99yza5ZpEfAyfYy0iq0du9jTr1FQGwP56th9yGFdbwDjXs /p:AllowUntrustedCertificate=true
+msbuild Proxy.csproj /p:DeployOnBuild=true /p:PublishProfile="proxy35 - Web Deploy" /p:Password=EB97W2kKA800EHZZ2DkcsLFsHlLe3E1ehg7gZcKuJvlCdveTNo3xzZqe49Y8 /p:AllowUntrustedCertificate=true
+msbuild Proxy.csproj /p:DeployOnBuild=true /p:PublishProfile="proxy36 - Web Deploy" /p:Password=d56xbvB5DFGCoCqyoQQYYJgCSB5dHqbkkW1xCxf2rkgvcBTm87RdSbdoznoQ /p:AllowUntrustedCertificate=true
+
+
 #msbuild Proxy.csproj /p:DeployOnBuild=true /p:PublishProfile="ptest - Web Deploy" /p:Password=P8N8nblb1cFi6aAvayaK1Rnilb2cZsxG9akYsFlruhL5mi8f7juuWeWoxEnl /p:AllowUntrustedCertificate=true
 #msbuild Proxy.csproj /p:DeployOnBuild=true /p:PublishProfile="ptest - Web Deploy" /p:Password=P8N8nblb1cFi6aAvayaK1Rnilb2cZsxG9akYsFlruhL5mi8f7juuWeWoxEnl /p:AllowUntrustedCertificate=true
 #msbuild Proxy.csproj /p:DeployOnBuild=true /p:PublishProfile="ptest - Web Deploy" /p:Password=P8N8nblb1cFi6aAvayaK1Rnilb2cZsxG9akYsFlruhL5mi8f7juuWeWoxEnl /p:AllowUntrustedCertificate=true

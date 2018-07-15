@@ -1,9 +1,11 @@
 ﻿using Dominio.Entidades;
 using Dominio.Helper;
 using Dominio.Interfaces;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 
 namespace Providers
 {
@@ -12,6 +14,11 @@ namespace Providers
         private readonly string info = @"https://yobit.net/api/3/info";
         private readonly string depth = @"https://yobit.net/api/3/depth/{0}?ignore_invalid=1";
         private readonly string priv = @"https://yobit.net/tapi/";
+
+        public YobitProvider()
+        {
+            WebProvider.CheckProxys();
+        }
 
         public void ActualizarMonedas(IMercadoCargar mercado, List<string> exclude)
         {
@@ -47,7 +54,7 @@ namespace Providers
             }
             
             //Obtengo y cargo       
-            WebProvider.DownloadPages(paginas, x => CargarPaginaDeOrdenes(x, mercado));
+            WebProvider.DownloadPages(paginas.Take(5).ToList(), x => CargarPaginaDeOrdenes(x, mercado));
         }
         
         public decimal ConsultarSaldo(string moneda)
@@ -144,8 +151,10 @@ namespace Providers
         
         private void CargarMonedas(dynamic response, IMercadoCargar mercado, List<string> exclude)
         {
+           string r = response.First;
+           response = JsonConvert.DeserializeObject(r);
            foreach (var relacion in response.pairs)
-            {
+           {
                 var monedas = relacion.Name.Split('_');
                 if (!exclude.Contains(monedas[0]) && !exclude.Contains(monedas[1]))
                 {
@@ -154,29 +163,36 @@ namespace Providers
             }
         }
 
-        private void CargarPaginaDeOrdenes(dynamic response, IMercadoCargar mercado)
+        private void CargarPaginaDeOrdenes(dynamic responses, IMercadoCargar mercado)
         {
-            foreach (var ordenesPorMoneda in response)
+            foreach (string response in responses)
             {
-                var monedas = ordenesPorMoneda.Name.Split('_');
-                var ventas = ordenesPorMoneda.Value["asks"];
-                var compras = ordenesPorMoneda.Value["bids"];
-
-                if (ventas != null)
+                dynamic relaciones = JsonConvert.DeserializeObject<dynamic>(response);
+                foreach(dynamic relacion in relaciones)
                 {
-                    foreach (var ordenVenta in ventas)
+                    dynamic ordenesPorMoneda = relacion;
+
+                    var monedas = ordenesPorMoneda.Name.Split('_');
+                    var ventas = ordenesPorMoneda.Value["asks"];
+                    var compras = ordenesPorMoneda.Value["bids"];
+
+                    if (ventas != null)
                     {
-                        mercado.AgregarOrdenDeVenta(monedas[0], monedas[1], (decimal)ordenVenta[0].Value, (decimal)ordenVenta[1].Value);
+                        foreach (var ordenVenta in ventas)
+                        {
+                            mercado.AgregarOrdenDeVenta(monedas[0], monedas[1], (decimal)ordenVenta[0].Value, (decimal)ordenVenta[1].Value);
+                        }
+                    }
+
+                    if (compras != null)
+                    {
+                        foreach (var ordenCompra in compras)
+                        {
+                            mercado.AgregarOrdenDeCompra(monedas[0], monedas[1], (decimal)ordenCompra[0].Value, (decimal)ordenCompra[1].Value);
+                        }
                     }
                 }
-
-                if (compras != null)
-                {
-                    foreach (var ordenCompra in compras)
-                    {
-                        mercado.AgregarOrdenDeCompra(monedas[0], monedas[1], (decimal)ordenCompra[0].Value, (decimal)ordenCompra[1].Value);
-                    }
-                }
+                
             }
         }
 

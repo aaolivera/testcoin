@@ -264,6 +264,16 @@
     <None Include="Properties\PublishProfiles\proxy3 - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\proxy30 - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\proxy31 - Web Deploy.pubxml" />
+    <None Include="Properties\PublishProfiles\proxy32 - FTP.pubxml" />
+    <None Include="Properties\PublishProfiles\proxy32 - Web Deploy.pubxml" />
+    <None Include="Properties\PublishProfiles\proxy33 - FTP.pubxml" />
+    <None Include="Properties\PublishProfiles\proxy33 - Web Deploy.pubxml" />
+    <None Include="Properties\PublishProfiles\proxy34 - FTP.pubxml" />
+    <None Include="Properties\PublishProfiles\proxy34 - Web Deploy.pubxml" />
+    <None Include="Properties\PublishProfiles\proxy35 - FTP.pubxml" />
+    <None Include="Properties\PublishProfiles\proxy35 - Web Deploy.pubxml" />
+    <None Include="Properties\PublishProfiles\proxy36 - FTP.pubxml" />
+    <None Include="Properties\PublishProfiles\proxy36 - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\proxy4 - FTP.pubxml" />
     <None Include="Properties\PublishProfiles\proxy4 - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\proxy5 - FTP.pubxml" />
