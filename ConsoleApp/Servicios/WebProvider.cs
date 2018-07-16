@@ -102,12 +102,6 @@ namespace Providers
             var n = 1;
             try
             {
-                //foreach (var url in urls)
-                //{
-                //    var response = GetPage(proxy == "local" ? url : proxy + url);
-                //    callBack(response);
-                //    Console.WriteLine($"{n++}/{urls.Count} - {proxy}");
-                //}
                 var myContent = JsonConvert.SerializeObject(urls);
                 var headers = new Dictionary<string, string> { { "Content-Type", "application/json" } };
 
@@ -128,7 +122,7 @@ namespace Providers
             {
 
                 var r = GetPage(proxy.Replace("?url=", "home/version"));
-                if(r != 1)
+                if(r != 3)
                 {
                     Console.WriteLine($"Proxy {proxy} antigua");
                     Proxys.Remove(proxy);
@@ -167,6 +161,7 @@ namespace Providers
         {
             try
             {
+                Console.WriteLine($"Iniciando post {url}");
                 var client = new HttpClient();
                 HttpContent queryString = new StringContent(body);
                 queryString.Headers.Clear();
@@ -179,20 +174,15 @@ namespace Providers
                 var responseStr = Encoding.UTF8.GetString(result);
 
                 dynamic dinamic = JsonConvert.DeserializeObject(responseStr);
-                //if (dinamic["success"] != 1)
-                //{
-                //    throw new Exception(dinamic["error"]);
-                //}
-                //else
-                //{
-                    
-                //}
+                Console.WriteLine($"Iniciando callback {url}");
                 callBack?.Invoke(dinamic);
+                Console.WriteLine($"Fin {url}");
                 return dinamic;
             }
             catch (Exception e)
             {
-                if (intento == 2)
+                Console.WriteLine($"Proxy {url} en error " + intento);
+                if (intento == 1)
                 {
                     throw new Exception();
                 }

@@ -1,6 +1,7 @@
 ﻿using CloudFlareUtilities;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -14,7 +15,7 @@ namespace Proxy.Controllers
     {
         public async Task<string> Index(string url)
         {
-            var result = GetExternalResponse(url);
+            var result = await GetExternalResponse(url);
 
             return result;
         }
@@ -27,11 +28,9 @@ namespace Proxy.Controllers
             {
                 tasks.Add(GetExternalResponseAsync(url));
             }
-            System.Diagnostics.Debug.WriteLine("1111111111111111111111111");
             var results = await Task.WhenAll(tasks);
-            System.Diagnostics.Debug.WriteLine("22222222222222222222222");
-            var json =  JsonConvert.SerializeObject(results);
-            System.Diagnostics.Debug.WriteLine("333333333333333333333");
+            
+            var json = JsonConvert.SerializeObject(results);
             return json;
         }
 
@@ -40,25 +39,23 @@ namespace Proxy.Controllers
             return await Task.Run(() => GetExternalResponse(url));
         }
 
-        private string GetExternalResponse(string url)
+        private async Task<string> GetExternalResponse(string url)
         {
-            System.Diagnostics.Debug.WriteLine("iniciooooooooooooooooo");
-            var handler = new ClearanceHandler
-            {
-                MaxRetries = 2
-            };
-            var client = new HttpClient(handler);
-            HttpResponseMessage response = client.GetAsync(url).Result;
+            //var handler = new ClearanceHandler
+            //{
+            //    MaxRetries = 2
+            //};
+            var client = new HttpClient();
+            HttpResponseMessage response = await client.GetAsync(url);
             response.EnsureSuccessStatusCode();
-            var result = response.Content.ReadAsByteArrayAsync().Result;
+            var result = await response.Content.ReadAsByteArrayAsync();
             var resultstr = Encoding.UTF8.GetString(result);
-            System.Diagnostics.Debug.WriteLine("Finnnnnnnnnnnnnnnnnnnnnnn");
             return resultstr;
         }
 
         public string Version()
         {
-            return "1";
+            return "3";
         }
     }
 }

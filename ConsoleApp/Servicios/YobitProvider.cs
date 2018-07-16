@@ -17,7 +17,7 @@ namespace Providers
 
         public YobitProvider()
         {
-            WebProvider.CheckProxys();
+            //WebProvider.CheckProxys();
         }
 
         public void ActualizarMonedas(IMercadoCargar mercado, List<string> exclude)
@@ -54,7 +54,7 @@ namespace Providers
             }
             
             //Obtengo y cargo       
-            WebProvider.DownloadPages(paginas.Take(5).ToList(), x => CargarPaginaDeOrdenes(x, mercado));
+            WebProvider.DownloadPages(paginas.Take(10).ToList(), x => CargarPaginaDeOrdenes(x, mercado));
         }
         
         public decimal ConsultarSaldo(string moneda)
