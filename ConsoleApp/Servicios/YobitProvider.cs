@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net.Http;
 
 namespace Providers
 {
@@ -14,12 +15,7 @@ namespace Providers
         private readonly string info = @"https://yobit.net/api/3/info";
         private readonly string depth = @"https://yobit.net/api/3/depth/{0}?ignore_invalid=1";
         private readonly string priv = @"https://yobit.net/tapi/";
-
-        public YobitProvider()
-        {
-            //WebProvider.CheckProxys();
-        }
-
+        
         public void ActualizarMonedas(IMercadoCargar mercado, List<string> exclude)
         {
             WebProvider.DownloadPages(new List<string> { info }, x => CargarMonedas(x, mercado, exclude));
@@ -54,7 +50,7 @@ namespace Providers
             }
             
             //Obtengo y cargo       
-            WebProvider.DownloadPages(paginas.Take(10).ToList(), x => CargarPaginaDeOrdenes(x, mercado));
+            WebProvider.DownloadPages(paginas.ToList(), x => CargarPaginaDeOrdenes(x, mercado));
         }
         
         public decimal ConsultarSaldo(string moneda)
@@ -149,93 +145,117 @@ namespace Providers
             return resultado;
         }
         
-        private void CargarMonedas(dynamic response, IMercadoCargar mercado, List<string> exclude)
+        private void CargarMonedas(IEnumerable<string> response, IMercadoCargar mercado, List<string> exclude)
         {
-           string r = response.First;
-           response = JsonConvert.DeserializeObject(r);
-           foreach (var relacion in response.pairs)
-           {
-                var monedas = relacion.Name.Split('_');
-                if (!exclude.Contains(monedas[0]) && !exclude.Contains(monedas[1]))
+            try
+            {
+                string r = response.First();
+                dynamic pares = JsonConvert.DeserializeObject(r);
+                foreach (var relacion in pares.pairs)
                 {
-                    mercado.AgregarRelacionEntreMonedas(monedas[0], monedas[1]);
+                    var monedas = relacion.Name.Split('_');
+                    if (!exclude.Contains(monedas[0]) && !exclude.Contains(monedas[1]))
+                    {
+                        mercado.AgregarRelacionEntreMonedas(monedas[0], monedas[1]);
+                    }
                 }
+            }
+            catch
+            {
+                Console.WriteLine("Error al mapear response CargarMonedas");
             }
         }
 
-        private void CargarPaginaDeOrdenes(dynamic responses, IMercadoCargar mercado)
+        private void CargarPaginaDeOrdenes(IEnumerable<string> responses, IMercadoCargar mercado)
         {
-            foreach (string response in responses)
+            try
             {
-                dynamic relaciones = JsonConvert.DeserializeObject<dynamic>(response);
-                foreach(dynamic relacion in relaciones)
+                foreach (string response in responses)
                 {
-                    dynamic ordenesPorMoneda = relacion;
+                    dynamic relaciones = JsonConvert.DeserializeObject<dynamic>(response);
+                    foreach (dynamic relacion in relaciones)
+                    {
+                        dynamic ordenesPorMoneda = relacion;
 
+                        var monedas = ordenesPorMoneda.Name.Split('_');
+                        var ventas = ordenesPorMoneda.Value["asks"];
+                        var compras = ordenesPorMoneda.Value["bids"];
+
+                        if (ventas != null)
+                        {
+                            foreach (var ordenVenta in ventas)
+                            {
+                                mercado.AgregarOrdenDeVenta(monedas[0], monedas[1], (decimal)ordenVenta[0].Value, (decimal)ordenVenta[1].Value);
+                            }
+                        }
+
+                        if (compras != null)
+                        {
+                            foreach (var ordenCompra in compras)
+                            {
+                                mercado.AgregarOrdenDeCompra(monedas[0], monedas[1], (decimal)ordenCompra[0].Value, (decimal)ordenCompra[1].Value);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error al mapear response CargarPaginaDeOrdenes");
+            }
+            
+        }
+
+        private void CargarOrdenes(IEnumerable<string> response, Moneda actual, Moneda siguiente, List<Orden> resultado)
+        {
+            try
+            {
+                string r = response.First();
+                dynamic ordenes = JsonConvert.DeserializeObject(r);
+                foreach (var ordenesPorMoneda in ordenes)
+                {
                     var monedas = ordenesPorMoneda.Name.Split('_');
                     var ventas = ordenesPorMoneda.Value["asks"];
                     var compras = ordenesPorMoneda.Value["bids"];
 
-                    if (ventas != null)
+                    if (ventas != null && monedas[1] == actual.Nombre)
                     {
                         foreach (var ordenVenta in ventas)
                         {
-                            mercado.AgregarOrdenDeVenta(monedas[0], monedas[1], (decimal)ordenVenta[0].Value, (decimal)ordenVenta[1].Value);
+                            resultado.Add(new Orden
+                            {
+                                MonedaQueQuieroVender = actual,
+                                MonedaQueQuieroComprar = siguiente,
+                                PrecioUnitario = (decimal)ordenVenta[0].Value, // de la moneda a vender
+                                Cantidad = (decimal)ordenVenta[1].Value,
+                                EsDeVenta = true,
+                                Relacion = ordenesPorMoneda.Name
+                            });
                         }
                     }
 
-                    if (compras != null)
+                    if (compras != null && monedas[0] == actual.Nombre)
                     {
                         foreach (var ordenCompra in compras)
                         {
-                            mercado.AgregarOrdenDeCompra(monedas[0], monedas[1], (decimal)ordenCompra[0].Value, (decimal)ordenCompra[1].Value);
+                            resultado.Add(new Orden
+                            {
+                                MonedaQueQuieroVender = actual,
+                                MonedaQueQuieroComprar = siguiente,
+                                PrecioUnitario = (decimal)ordenCompra[0].Value, // de la moneda a comprar
+                                Cantidad = (decimal)ordenCompra[1].Value,
+                                EsDeVenta = false,
+                                Relacion = ordenesPorMoneda.Name
+                            });
                         }
                     }
                 }
-                
             }
-        }
-
-        private void CargarOrdenes(dynamic response, Moneda actual, Moneda siguiente, List<Orden> resultado)
-        {
-            foreach (var ordenesPorMoneda in response)
+            catch
             {
-                var monedas = ordenesPorMoneda.Name.Split('_');
-                var ventas = ordenesPorMoneda.Value["asks"];
-                var compras = ordenesPorMoneda.Value["bids"];
-
-                if (ventas != null && monedas[1] == actual.Nombre)
-                {
-                    foreach (var ordenVenta in ventas)
-                    {
-                        resultado.Add(new Orden
-                        {
-                            MonedaQueQuieroVender = actual,
-                            MonedaQueQuieroComprar = siguiente,
-                            PrecioUnitario = (decimal)ordenVenta[0].Value, // de la moneda a vender
-                            Cantidad = (decimal)ordenVenta[1].Value,
-                            EsDeVenta = true,
-                            Relacion = ordenesPorMoneda.Name
-                        });
-                    }
-                }
-
-                if (compras != null && monedas[0] == actual.Nombre)
-                {
-                    foreach (var ordenCompra in compras)
-                    {
-                        resultado.Add(new Orden
-                        {
-                            MonedaQueQuieroVender = actual,
-                            MonedaQueQuieroComprar = siguiente,
-                            PrecioUnitario = (decimal)ordenCompra[0].Value, // de la moneda a comprar
-                            Cantidad = (decimal)ordenCompra[1].Value,
-                            EsDeVenta = false,
-                            Relacion = ordenesPorMoneda.Name
-                        });
-                    }
-                }
+                Console.WriteLine("Error al mapear response CargarOrdenes");
             }
+            
         }
 
         #region getpost
@@ -253,7 +273,8 @@ namespace Providers
                     {"Key", key },
                     {"Sign", bodyNonce.HmacShaDigest(secret) }
                 };
-                return WebProvider.PostPage(url, bodyNonce, headers);
+                var client = new HttpClientApp();
+                return client.Post(url, bodyNonce, headers);
             }
             catch (Exception e)
             {
