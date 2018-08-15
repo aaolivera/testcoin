@@ -274,7 +274,7 @@ namespace Providers
                     {"Sign", bodyNonce.HmacShaDigest(secret) }
                 };
                 var client = new HttpClientApp();
-                return client.Post(url, bodyNonce, headers);
+                return client.PostAsync(url, bodyNonce, headers);
             }
             catch (Exception e)
             {

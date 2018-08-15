@@ -16,7 +16,9 @@ namespace Dominio.Helper
         {
             HttpClientHandler handler = new HttpClientHandler()
             {
-                AutomaticDecompression = DecompressionMethods.GZip
+                AutomaticDecompression = DecompressionMethods.GZip,
+                Proxy = null,
+                UseProxy = false
             };
             client = new HttpClient(handler);
             client.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
@@ -32,7 +34,7 @@ namespace Dominio.Helper
             return await client.GetByteArrayAsync(url);
         }
 
-        public dynamic Post(string url, string body, Dictionary<string, string> headers)
+        public async Task<dynamic> PostAsync(string url, string body, Dictionary<string, string> headers)
         {
             HttpContent queryString = new StringContent(body);
             queryString.Headers.Clear();
@@ -40,8 +42,8 @@ namespace Dominio.Helper
             {
                 queryString.Headers.Add(i, headers[i]);
             }
-            var response = client.PostAsync(url, queryString).Result;
-            var result = response.Content.ReadAsByteArrayAsync().Result;
+            var response = await client.PostAsync(url, queryString);
+            var result = await response.Content.ReadAsByteArrayAsync();
             return Encoding.UTF8.GetString(result);
         }
     }

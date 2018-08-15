@@ -34,7 +34,7 @@ namespace Providers
             "http://proxy26.gearhostpreview.com/?url=",
             "http://proxy27.gear.host/?url=",
             "http://proxy28.gear.host/?url=",
-            "http://proxy29.gear.host/?url=",
+            //"http://proxy29.gear.host/?url=",
             "http://proxy30.gear.host/?url=",
             "http://proxy31.gear.host/?url=",
             "http://proxy32.gearhostpreview.com/?url=",
@@ -89,7 +89,7 @@ namespace Providers
             return await Task.Run(() => DownloadPages(urls, proxy, callBack, client, stopwatch));
         }
 
-        private static Bloque DownloadPages(List<string> urls, string proxy, Action<dynamic> callBack, HttpClientApp client, Stopwatch stopwatch)
+        private static async Task<Bloque> DownloadPages(List<string> urls, string proxy, Action<dynamic> callBack, HttpClientApp client, Stopwatch stopwatch)
         {
             var retorno = new Bloque();
             try
@@ -98,11 +98,12 @@ namespace Providers
                 var headers = new Dictionary<string, string> { { "Content-Type", "application/json" } };
 
                 var it = stopwatch.ElapsedMilliseconds;
-                var responseStr = client.Post(proxy, myContent, headers);
-                ProxyResult dinamic = JsonConvert.DeserializeObject<ProxyResult>(responseStr);
+                var responseStr = await client.PostAsync(proxy, myContent, headers);
                 it = stopwatch.ElapsedMilliseconds - it;
+                
 
                 var c = stopwatch.ElapsedMilliseconds;
+                ProxyResult dinamic = JsonConvert.DeserializeObject<ProxyResult>(responseStr);
                 callBack?.Invoke(dinamic.Responses.Select(v => Encoding.UTF8.GetString(v)));
                 c = stopwatch.ElapsedMilliseconds - c;
 
