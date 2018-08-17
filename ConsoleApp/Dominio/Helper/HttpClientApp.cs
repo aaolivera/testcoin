@@ -24,12 +24,7 @@ namespace Dominio.Helper
             client.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
         }
 
-        public async Task<byte[]> GetAsync(string url)
-        {
-            return await Task.Run(() => Get(url));
-        }
-
-        private async Task<byte[]> Get(string url)
+        public async Task<byte[]> Get(string url)
         {
             return await client.GetByteArrayAsync(url);
         }

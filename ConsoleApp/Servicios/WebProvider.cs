@@ -86,11 +86,6 @@ namespace Providers
         
         private static async Task<Bloque> DownloadPagesAsync(List<string> urls, string proxy, Action<dynamic> callBack, HttpClientApp client, Stopwatch stopwatch)
         {
-            return await Task.Run(() => DownloadPages(urls, proxy, callBack, client, stopwatch));
-        }
-
-        private static async Task<Bloque> DownloadPages(List<string> urls, string proxy, Action<dynamic> callBack, HttpClientApp client, Stopwatch stopwatch)
-        {
             var retorno = new Bloque();
             try
             {

@@ -23,7 +23,7 @@ namespace Proxy.Controllers
 
             foreach (var url in urls)
             {
-                tasks.Add(client.GetAsync(url));
+                tasks.Add(client.Get(url));
             }
             resultado.Responses = await Task.WhenAll(tasks);
             stopwatch.Stop();

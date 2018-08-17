@@ -18,14 +18,6 @@ namespace ConsoleApp
                 var mercado = new Mercado(providers, new List<string>{ "dash" });
                 mercado.ActualizarMonedas();
                 mercado.ActualizarOrdenes();
-                //var monedas = mercado.ObtenerMonedas();
-
-                //foreach (var moneda in mercado.ListarMonedasInfimas())
-                //{
-                //    System.Console.WriteLine(moneda.Nombre + ": " + string.Join(",", moneda.OrdenesDeCompraPorMoneda.Keys.Select(y =>y.Nombre))); 
-                //}
-                //System.Console.WriteLine("Bloques descargados...");
-                //System.Console.ReadLine();
 
                 //var monedaPilar = "btc";
 
@@ -33,11 +25,11 @@ namespace ConsoleApp
                 //var inicial = 0.0001002M;
 
                 //var tasks = new List<Task>();
-                //foreach (var moneda in monedas)
+                //foreach (var moneda in mercado.ObtenerMonedas())
                 //{
-                //    ChequearMoneda(mercado, monedaPilar, inicial, moneda.Nombre);
+                //    //ChequearMoneda(mercado, monedaPilar, inicial, moneda.Nombre);
 
-                //    //tasks.Add(ChequearMonedaAsync(mercado, monedaPilar, inicial, moneda.Nombre));
+                //    tasks.Add(ChequearMonedaAsync(mercado, monedaPilar, inicial, moneda.Nombre));
                 //}
                 //System.Console.WriteLine("Buscando...");
                 //Task.WaitAll(tasks.ToArray());
@@ -85,9 +77,9 @@ namespace ConsoleApp
                             }
                             System.Console.WriteLine("////////////////////////////////////////////////////////////////");
                             System.Console.WriteLine(texto);
-                        mercado.EjecutarMovimientos(todos, inicial);
-                        System.Console.WriteLine("////////////////////////////////////////////////////////////////");
-                        System.Console.ReadLine();
+                        //mercado.EjecutarMovimientos(todos, inicial);
+                        //System.Console.WriteLine("////////////////////////////////////////////////////////////////");
+                        //System.Console.ReadLine();
                     }
                 }
                 };
