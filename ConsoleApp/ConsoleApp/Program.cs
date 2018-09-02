@@ -10,31 +10,31 @@ namespace ConsoleApp
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             while (true)
             {
                 var providers = new List<IProvider> { new YobitProvider() };
                 var mercado = new Mercado(providers, new List<string>{ "dash" });
-                mercado.ActualizarMonedas();
-                mercado.ActualizarOrdenes();
+                await mercado.ActualizarMonedas();
+                await mercado.ActualizarOrdenes();
 
-                //var monedaPilar = "btc";
+                var monedaPilar = "btc";
 
-                //System.Console.WriteLine("");
-                //var inicial = 0.0001002M;
+                System.Console.WriteLine("");
+                var inicial = 0.0001002M;
 
-                //var tasks = new List<Task>();
-                //foreach (var moneda in mercado.ObtenerMonedas())
-                //{
-                //    //ChequearMoneda(mercado, monedaPilar, inicial, moneda.Nombre);
+                var tasks = new List<Task>();
+                foreach (var moneda in mercado.Monedas)
+                {
+                    //ChequearMoneda(mercado, monedaPilar, inicial, moneda.Nombre);
 
-                //    tasks.Add(ChequearMonedaAsync(mercado, monedaPilar, inicial, moneda.Nombre));
-                //}
+                    tasks.Add(ChequearMonedaAsync(mercado, monedaPilar, inicial, moneda.Nombre));
+                }
                 //System.Console.WriteLine("Buscando...");
                 //Task.WaitAll(tasks.ToArray());
-                System.Console.WriteLine("Fin");
-                System.Console.ReadLine();
+                //System.Console.WriteLine("Fin");
+                //System.Console.ReadLine();
             }
         }
 
@@ -63,7 +63,7 @@ namespace ConsoleApp
                         todos.AddRange(movimientosVuelta);
                         var porcentaje = (((cantidadVuelta - inicial) * 100) / inicial);
                         var cantidadMovimientos = todos.Count - 1;
-                        if (porcentaje >= 1 && cantidadMovimientos <= 4)
+                        if (porcentaje >= 1 && cantidadMovimientos <= 5)
                         {
                             var texto = $"{(cantidadMovimientos).ToString("00")}|{porcentaje.ToString("00.00")}|";
 
@@ -80,8 +80,8 @@ namespace ConsoleApp
                         //mercado.EjecutarMovimientos(todos, inicial);
                         //System.Console.WriteLine("////////////////////////////////////////////////////////////////");
                         //System.Console.ReadLine();
+                        }
                     }
-                }
                 };
         }        
     }

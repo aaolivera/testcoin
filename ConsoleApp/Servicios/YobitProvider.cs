@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace Providers
 {
@@ -16,19 +17,18 @@ namespace Providers
         private readonly string depth = @"https://yobit.net/api/3/depth/{0}?ignore_invalid=1";
         private readonly string priv = @"https://yobit.net/tapi/";
         
-        public void ActualizarMonedas(IMercadoCargar mercado, List<string> exclude)
+        public async Task ActualizarMonedas(IMercadoCargar mercado, List<string> exclude)
         {
-            WebProvider.DownloadPages(new List<string> { info }, x => CargarMonedas(x, mercado, exclude));
+            await WebProvider.DownloadPages(new List<string> { info }, x => CargarMonedas(x, mercado, exclude));
         }
 
-        public void ActualizarOrdenes(IMercadoCargar mercado)
+        public async Task ActualizarOrdenes(IMercadoCargar mercado)
         {
-            var relaciones = mercado.ObetenerRelacionesEntreMonedas();
             var page = string.Empty;
             
             //Armo Urls de paginas
             var paginas = new List<string>();
-            foreach(var i in relaciones)
+            foreach(var i in mercado.RelacionesEntreMonedas)
             {
                 if (page.Length + i.Length > 510)
                 {
@@ -50,38 +50,38 @@ namespace Providers
             }
             
             //Obtengo y cargo       
-            WebProvider.DownloadPages(paginas.ToList(), x => CargarPaginaDeOrdenes(x, mercado));
+            await WebProvider.DownloadPages(paginas.ToList(), x => CargarPaginaDeOrdenes(x, mercado));
         }
         
-        public decimal ConsultarSaldo(string moneda)
+        public async Task<decimal> ConsultarSaldo(string moneda)
         {
             var body = "method=getInfo&nonce={0}";
-            dynamic response = PostPage(priv, body);
+            dynamic response = await PostPage(priv, body);
             var saldo = response == null || response["return"]["funds"][moneda] == null ? 0 : response["return"]["funds"][moneda].Value;
             return decimal.Parse(saldo.ToString(), NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint);
         }
 
-        public bool HayOrdenesActivas(string relacion)
+        public async Task<bool> HayOrdenesActivas(string relacion)
         {
             //var body = $"method=ActiveOrders&pair={relacion}&nonce={{0}}";
-            //dynamic response = PostPage(priv, body);
+            //dynamic response = await PostPage(priv, body);
             //var resultado = (response != null && response["return"] != null);
             //return resultado;
             return false;
         }
 
-        public decimal EjecutarOrden(Orden i)
+        public async Task<decimal> EjecutarOrden(Orden i)
         {
             var body = $"method=Trade&pair={i.Relacion}&type={(i.EsDeVenta ? "buy" : "sell")}&rate={i.PrecioUnitario.ToString("0.########", CultureInfo.InvariantCulture)}&amount={i.Cantidad.ToString("0.########", CultureInfo.InvariantCulture)}&nonce={{0}}";
             System.Console.WriteLine(body);
-            //PostPage(priv, body);
+            //await PostPage(priv, body);
             return i.EsDeVenta ? i.Cantidad : Decimal.Round((i.Cantidad * i.PrecioUnitario) - (0.2M / 100 * (i.Cantidad * i.PrecioUnitario)));
             
         }
 
-        public List<Orden> ObtenerOrdenesNecesarias(Moneda actual, Moneda siguiente, decimal inicial)
+        public async Task<List<Orden>> ObtenerOrdenesNecesarias(Moneda actual, Moneda siguiente, decimal inicial)
         {
-            var ordenesActivas = ObtenerOrdenesActivas(actual, siguiente);
+            var ordenesActivas = await ObtenerOrdenesActivas(actual, siguiente);
             var ordenesNecesarias = new List<Orden>();
             
             var cantidadActual = 0M;
@@ -135,12 +135,12 @@ namespace Providers
             return ordenesNecesarias;
         }
         
-        private List<Orden> ObtenerOrdenesActivas(Moneda actual, Moneda siguiente)
+        private async Task<List<Orden>> ObtenerOrdenesActivas(Moneda actual, Moneda siguiente)
         {
             var url = string.Format(depth, $"{actual.Nombre}_{siguiente.Nombre}-{siguiente.Nombre}_{actual.Nombre}");
             var resultado = new List<Orden>();
 
-            WebProvider.DownloadPages(new List<string> { url }, x => CargarOrdenes(x, actual, siguiente, resultado));
+            await WebProvider.DownloadPages(new List<string> { url }, x => CargarOrdenes(x, actual, siguiente, resultado));
             
             return resultado;
         }
@@ -182,7 +182,7 @@ namespace Providers
                         var compras = ordenesPorMoneda.Value["bids"];
 
                         if (ventas != null)
-                        {
+                        {  
                             foreach (var ordenVenta in ventas)
                             {
                                 mercado.AgregarOrdenDeVenta(monedas[0], monedas[1], (decimal)ordenVenta[0].Value, (decimal)ordenVenta[1].Value);
@@ -202,6 +202,7 @@ namespace Providers
             catch (Exception e)
             {
                 Console.WriteLine("Error al mapear response CargarPaginaDeOrdenes");
+                throw;
             }
             
         }
@@ -260,7 +261,7 @@ namespace Providers
 
         #region getpost
 
-        private static dynamic PostPage(string url, string body)
+        private static async Task<dynamic> PostPage(string url, string body)
         {
             try
             {
@@ -274,7 +275,7 @@ namespace Providers
                     {"Sign", bodyNonce.HmacShaDigest(secret) }
                 };
                 var client = new HttpClientApp();
-                return client.PostAsync(url, bodyNonce, headers);
+                return await client.PostAsync(url, bodyNonce, headers);
             }
             catch (Exception e)
             {

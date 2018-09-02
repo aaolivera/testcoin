@@ -1,5 +1,7 @@
 ﻿
 
+using System;
+
 namespace Dominio.Dtos
 {
     public class ProxyResult

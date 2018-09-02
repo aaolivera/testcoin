@@ -1,11 +1,12 @@
 ﻿using Dominio.Entidades;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Dominio.Interfaces
 {
     public interface IMercado
     {
-        void ActualizarMonedas();
-        void ActualizarOrdenes();
+        Task ActualizarMonedas();
+        Task ActualizarOrdenes();
     }
 }

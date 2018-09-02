@@ -1,16 +1,17 @@
 ﻿using Dominio.Entidades;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Dominio.Interfaces
 {
     public interface IProvider
     {
-        void ActualizarMonedas(IMercadoCargar mercado, List<string> exclude);
-        void ActualizarOrdenes(IMercadoCargar mercado);
+        Task ActualizarMonedas(IMercadoCargar mercado, List<string> exclude);
+        Task ActualizarOrdenes(IMercadoCargar mercado);
 
-        List<Orden> ObtenerOrdenesNecesarias(Moneda actual, Moneda siguiente, decimal inicial);
-        decimal EjecutarOrden(Orden i);
-        decimal ConsultarSaldo(string moneda);
-        bool HayOrdenesActivas(string relacion);
+        Task<List<Orden>> ObtenerOrdenesNecesarias(Moneda actual, Moneda siguiente, decimal inicial);
+        Task<decimal> EjecutarOrden(Orden i);
+        Task<decimal> ConsultarSaldo(string moneda);
+        Task<bool> HayOrdenesActivas(string relacion);
     }
 }

@@ -8,25 +8,21 @@ using System.Threading.Tasks;
 
 namespace Dominio.Helper
 {
-    public class HttpClientApp
+    public class HttpClientApp : HttpClient
     {
-        private HttpClient client;
-
-        public HttpClientApp()
+        public HttpClientApp(): base(new HttpClientHandler()
         {
-            HttpClientHandler handler = new HttpClientHandler()
-            {
-                AutomaticDecompression = DecompressionMethods.GZip,
-                Proxy = null,
-                UseProxy = false
-            };
-            client = new HttpClient(handler);
-            client.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
+            AutomaticDecompression = DecompressionMethods.GZip,
+            Proxy = null,
+            UseProxy = false
+        })
+        {
+            this.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
         }
 
         public async Task<byte[]> Get(string url)
         {
-            return await client.GetByteArrayAsync(url);
+            return await GetByteArrayAsync(url);
         }
 
         public async Task<dynamic> PostAsync(string url, string body, Dictionary<string, string> headers)
@@ -37,7 +33,7 @@ namespace Dominio.Helper
             {
                 queryString.Headers.Add(i, headers[i]);
             }
-            var response = await client.PostAsync(url, queryString);
+            var response = await PostAsync(url, queryString);
             var result = await response.Content.ReadAsByteArrayAsync();
             return Encoding.UTF8.GetString(result);
         }

@@ -16,37 +16,41 @@ namespace Providers
     public static class WebProvider
     {
         private static readonly List<string> Proxys = new List<string> {
-            "http://localhost:63011/?url=",
+            //"http://localhost:63011/?url=",
             "http://proxy2.gearhostpreview.com/?url=",
             "http://proxy3.gearhostpreview.com/?url=",
             "http://proxy4.gearhostpreview.com/?url=",
             "http://proxy5.gearhostpreview.com/?url=",
             "http://proxy6.gearhostpreview.com/?url=",
+
             "http://proxy17.gear.host/?url=",
             "http://proxy18.gear.host/?url=",
             "http://proxy19.gear.host/?url=",
             "http://proxy20.gear.host/?url=",
             "http://proxy21.gear.host/?url=",
+
             "http://proxy22.gearhostpreview.com/?url=",
             "http://proxy23.gearhostpreview.com/?url=",
             "http://proxy24.gearhostpreview.com/?url=",
             "http://proxy25.gearhostpreview.com/?url=",
             "http://proxy26.gearhostpreview.com/?url=",
+
             "http://proxy27.gear.host/?url=",
             "http://proxy28.gear.host/?url=",
-            //"http://proxy29.gear.host/?url=",
+            "http://proxy29.gear.host/?url=",
             "http://proxy30.gear.host/?url=",
             "http://proxy31.gear.host/?url=",
+
             "http://proxy32.gearhostpreview.com/?url=",
             "http://proxy33.gearhostpreview.com/?url=",
             "http://proxy34.gearhostpreview.com/?url=",
             "http://proxy35.gearhostpreview.com/?url=",
-            "http://proxy36.gearhostpreview.com/?url=",
+            //"http://proxy36.gearhostpreview.com/?url=",
         };
 
         
 
-        public static void DownloadPages(List<string> urls, Action<dynamic> callBack)
+        public static async Task DownloadPages(List<string> urls, Action<dynamic> callBack)
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
             Console.WriteLine("---------------------------------------------------------------");
@@ -64,11 +68,11 @@ namespace Providers
 
             for (var i = 0; i < Proxys.Count && i < bloquesDeUrls.Count(); i++)
             {
-                tasks.Add(DownloadPagesAsync(bloquesDeUrls[i].ToList(), Proxys[i], callBack, client, stopwatch));
+                tasks.Add(DownloadPagesAsync(bloquesDeUrls[i].ToList(), Proxys[i], callBack, client));
             }
             Console.WriteLine($"Taks Instanciados en {stopwatch.ElapsedMilliseconds * 0.001M}");
 
-            var bloques = (Task.WhenAll(tasks).Result).ToList();
+            var bloques = await Task.WhenAll(tasks);
             Console.WriteLine($"Taks Terminados en {stopwatch.ElapsedMilliseconds * 0.001M}");
 
             var descargasFallidas = bloques.Where(x => x.PaginasFallidas.Any());
@@ -77,32 +81,32 @@ namespace Providers
                 var paginas = bloques.SelectMany(x => x.PaginasFallidas).ToList();
                 
                 Console.WriteLine($"Existen {paginas.Count} paginas fallidas, reprocesandolas");
-                DownloadPages(paginas, callBack);
+                await DownloadPages(paginas, callBack);
             }
             stopwatch.Stop();
             Console.WriteLine("Descarga Completa en " + stopwatch.ElapsedMilliseconds * 0.001M);
             Console.WriteLine("---------------------------------------------------------------");
         }
         
-        private static async Task<Bloque> DownloadPagesAsync(List<string> urls, string proxy, Action<dynamic> callBack, HttpClientApp client, Stopwatch stopwatch)
+        private static async Task<Bloque> DownloadPagesAsync(List<string> urls, string proxy, Action<dynamic> callBack, HttpClientApp client)
         {
             var retorno = new Bloque();
             try
             {
                 var myContent = JsonConvert.SerializeObject(urls);
                 var headers = new Dictionary<string, string> { { "Content-Type", "application/json" } };
+                Stopwatch stopwatch = Stopwatch.StartNew();
 
                 var it = stopwatch.ElapsedMilliseconds;
                 var responseStr = await client.PostAsync(proxy, myContent, headers);
                 it = stopwatch.ElapsedMilliseconds - it;
                 
-
                 var c = stopwatch.ElapsedMilliseconds;
                 ProxyResult dinamic = JsonConvert.DeserializeObject<ProxyResult>(responseStr);
                 callBack?.Invoke(dinamic.Responses.Select(v => Encoding.UTF8.GetString(v)));
                 c = stopwatch.ElapsedMilliseconds - c;
 
-                Console.WriteLine($"Post {proxy}: Proxy {dinamic.Tiempo}, Consola: {it * 0.001M}, Procesado: {c * 0.001M} segs");
+                Console.WriteLine($"Post {proxy}: Proxy {dinamic.Tiempo}, Consola: {it * 0.001M}, Procesado: {c * 0.001M} segs, {dinamic.Responses.Sum(x => x.Length)}");
             }
             catch
             {
