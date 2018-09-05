@@ -24,8 +24,8 @@ namespace Providers
             "http://proxy6.gearhostpreview.com/?url=",
 
             "http://proxy17.gear.host/?url=",
-            "http://proxy18.gear.host/?url=",
-            "http://proxy19.gear.host/?url=",
+            //"http://proxy18.gear.host/?url=",
+            //"http://proxy19.gear.host/?url=",
             "http://proxy20.gear.host/?url=",
             "http://proxy21.gear.host/?url=",
 
@@ -35,15 +35,15 @@ namespace Providers
             "http://proxy25.gearhostpreview.com/?url=",
             "http://proxy26.gearhostpreview.com/?url=",
 
-            "http://proxy27.gear.host/?url=",
+            //"http://proxy27.gear.host/?url=",
             "http://proxy28.gear.host/?url=",
             "http://proxy29.gear.host/?url=",
-            "http://proxy30.gear.host/?url=",
+            //"http://proxy30.gear.host/?url=",
             "http://proxy31.gear.host/?url=",
 
             "http://proxy32.gearhostpreview.com/?url=",
             "http://proxy33.gearhostpreview.com/?url=",
-            "http://proxy34.gearhostpreview.com/?url=",
+            //"http://proxy34.gearhostpreview.com/?url=",
             "http://proxy35.gearhostpreview.com/?url=",
             //"http://proxy36.gearhostpreview.com/?url=",
         };

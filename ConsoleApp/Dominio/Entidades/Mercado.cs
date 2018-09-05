@@ -74,18 +74,26 @@ namespace Dominio.Entidades
             AgregarOrdenDeCompra(monedaAComprar, monedaAVender, 1 / precio, precio * cantidad);
         }
         
-        public List<Moneda> ObtenerOperacionOptima(string origen, string destino, decimal cantidad, out string ejecucion)
+        public List<Moneda> ObtenerOperacionOptima(string origen, string destino, decimal cantidad, out string ejecucionIda, out string ejecucionVuelta)
         {
-            ejecucion = (origen + destino).ToLower();
+            ejecucionIda = (origen + destino).ToLower();
+            ejecucionVuelta = (destino + origen).ToLower();
             var monedaOrigen = MonedasPorNombre[origen.ToLower()];
             var monedaDestino = MonedasPorNombre[destino.ToLower()];
-            monedaOrigen.SetCantidad(cantidad, ejecucion);
 
-            var stack = new Queue<Moneda>();
-            stack.Enqueue(monedaOrigen);
-            RecorrerMercado(stack, monedaDestino, ejecucion);
+            monedaOrigen.SetCantidad(cantidad, ejecucionIda);            
+            RecorrerMercado(new Queue<Moneda>(new List<Moneda> { monedaOrigen }), monedaDestino, ejecucionIda);
+            var ida = Recorrido(monedaDestino, ejecucionIda);
 
-            return Recorrido(monedaDestino, ejecucion);
+            if(monedaDestino.Cantidad(ejecucionIda) > 0)
+            {
+                monedaDestino.SetCantidad(monedaDestino.Cantidad(ejecucionIda), ejecucionVuelta);
+                RecorrerMercado(new Queue<Moneda>(new List<Moneda> { monedaDestino }), monedaOrigen, ejecucionVuelta);
+                var vuelta = Recorrido(monedaOrigen, ejecucionVuelta);
+                ida.AddRange(vuelta);
+            }
+            
+            return ida;
         }
 
         public async Task EjecutarMovimientos(List<Moneda> movimientos, decimal inicial)
@@ -130,13 +138,11 @@ namespace Dominio.Entidades
                     }
                     continue;
                 }
-
                 monedaActual.Vicitar(ejecucion);
-                
-                foreach (var n in monedaActual.OrdenesDeCompraPorMoneda.Where(x => !x.Key.Vicitado(ejecucion) && x.Value.Any()))
+                foreach (var n in monedaActual.OrdenesDeCompraPorMoneda.Where(c => !c.Key.Vicitado(ejecucion) && c.Value.Any()))
                 {
                     var monedaAComprar = n.Key;
-                    if (monedaActual.ConvertirA(monedaAComprar, ejecucion))
+                    if (monedaActual.Comprar(monedaAComprar, ejecucion))
                     {
                         stack.Enqueue(monedaAComprar);
                     }

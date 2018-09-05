@@ -14,9 +14,10 @@ namespace Providers
     public class YobitProvider : IProvider
     {
         private readonly string info = @"https://yobit.net/api/3/info";
-        private readonly string depth = @"https://yobit.net/api/3/depth/{0}?ignore_invalid=1";
+        private readonly string depth = @"https://yobit.net/api/3/depth/{0}?ignore_invalid=1&limit=10";
         private readonly string priv = @"https://yobit.net/tapi/";
-        
+
+        #region CARGA
         public async Task ActualizarMonedas(IMercadoCargar mercado, List<string> exclude)
         {
             await WebProvider.DownloadPages(new List<string> { info }, x => CargarMonedas(x, mercado, exclude));
@@ -52,7 +53,51 @@ namespace Providers
             //Obtengo y cargo       
             await WebProvider.DownloadPages(paginas.ToList(), x => CargarPaginaDeOrdenes(x, mercado));
         }
-        
+
+        private void CargarPaginaDeOrdenes(IEnumerable<string> responses, IMercadoCargar mercado)
+        {
+            try
+            {
+                foreach (string response in responses)
+                {
+                    dynamic relaciones = JsonConvert.DeserializeObject<dynamic>(response);
+                    foreach (dynamic relacion in relaciones)
+                    {
+                        dynamic ordenesPorMoneda = relacion;
+
+                        var monedas = ordenesPorMoneda.Name.Split('_');
+                        var ventas = ordenesPorMoneda.Value["asks"];
+                        var compras = ordenesPorMoneda.Value["bids"];
+
+                        if (ventas != null)
+                        {  
+                            foreach (var ordenVenta in ventas)
+                            {
+                                mercado.AgregarOrdenDeVenta(monedas[0], monedas[1], (decimal)ordenVenta[0].Value, (decimal)ordenVenta[1].Value);
+                            }
+                        }
+
+                        if (compras != null)
+                        {
+                            foreach (var ordenCompra in compras)
+                            {
+                                mercado.AgregarOrdenDeCompra(monedas[0], monedas[1], (decimal)ordenCompra[0].Value, (decimal)ordenCompra[1].Value);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error al mapear response CargarPaginaDeOrdenes");
+                throw;
+            }
+            
+        }
+        #endregion
+
+
+
         public async Task<decimal> ConsultarSaldo(string moneda)
         {
             var body = "method=getInfo&nonce={0}";
@@ -166,46 +211,6 @@ namespace Providers
             }
         }
 
-        private void CargarPaginaDeOrdenes(IEnumerable<string> responses, IMercadoCargar mercado)
-        {
-            try
-            {
-                foreach (string response in responses)
-                {
-                    dynamic relaciones = JsonConvert.DeserializeObject<dynamic>(response);
-                    foreach (dynamic relacion in relaciones)
-                    {
-                        dynamic ordenesPorMoneda = relacion;
-
-                        var monedas = ordenesPorMoneda.Name.Split('_');
-                        var ventas = ordenesPorMoneda.Value["asks"];
-                        var compras = ordenesPorMoneda.Value["bids"];
-
-                        if (ventas != null)
-                        {  
-                            foreach (var ordenVenta in ventas)
-                            {
-                                mercado.AgregarOrdenDeVenta(monedas[0], monedas[1], (decimal)ordenVenta[0].Value, (decimal)ordenVenta[1].Value);
-                            }
-                        }
-
-                        if (compras != null)
-                        {
-                            foreach (var ordenCompra in compras)
-                            {
-                                mercado.AgregarOrdenDeCompra(monedas[0], monedas[1], (decimal)ordenCompra[0].Value, (decimal)ordenCompra[1].Value);
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Error al mapear response CargarPaginaDeOrdenes");
-                throw;
-            }
-            
-        }
 
         private void CargarOrdenes(IEnumerable<string> response, Moneda actual, Moneda siguiente, List<Orden> resultado)
         {
