@@ -34,30 +34,38 @@ namespace Dominio.Entidades
             var ordenesDecompraNecesarias = new List<Orden>();
             var cantidadDestino = 0M;
             var cantidadOrigen = 0M;
+            var i = 0;
             foreach (var orden in ordenesDeCompra)
             {
-                var cantidadAVender = 0M;
-                if (cantidadOrigen + orden.Cantidad < Cantidad(ejecucion))
+                i++;
+                var copiaDeOrden = orden.Clonar();
+                var cantidadOrigenDeOrdenActual = 0M;
+                if (cantidadOrigen + copiaDeOrden.Cantidad < Cantidad(ejecucion))
                 {
-                    cantidadAVender = orden.Cantidad;
+                    cantidadOrigenDeOrdenActual = copiaDeOrden.Cantidad;
                 }
-                else if (cantidadOrigen + orden.Cantidad > Cantidad(ejecucion))
+                else if (cantidadOrigen + copiaDeOrden.Cantidad > Cantidad(ejecucion))
                 {
-                    cantidadAVender = (Cantidad(ejecucion) - cantidadOrigen);
-                    if (cantidadAVender == 0) break;
+                    cantidadOrigenDeOrdenActual = (Cantidad(ejecucion) - cantidadOrigen);
+                    if (cantidadOrigenDeOrdenActual == 0) break;
+                    copiaDeOrden.Cantidad = cantidadOrigenDeOrdenActual;
+                    if (copiaDeOrden.EsDeVenta)
+                    {
+                        copiaDeOrden.Cantidad = cantidadOrigenDeOrdenActual - 0.199600798M / 100 * cantidadOrigenDeOrdenActual;
+                    }
                 }
                 else
                 {
                     break;
                 }
-
-                cantidadDestino += cantidadAVender * orden.PrecioUnitario;
-                cantidadOrigen += cantidadAVender;
-                ordenesDecompraNecesarias.Add(orden);
+                
+                cantidadDestino += cantidadOrigenDeOrdenActual * copiaDeOrden.PrecioUnitario;
+                cantidadOrigen += cantidadOrigenDeOrdenActual;
+                ordenesDecompraNecesarias.Add(copiaDeOrden);
             }
             
             cantidadDestino = cantidadDestino - (ordenesDecompraNecesarias.First().EsDeVenta ? 0.199600798M : 0.2M) / 100 * cantidadDestino;
-
+            
             if (cantidadOrigen == Cantidad(ejecucion) && monedaDestino.Cantidad(ejecucion) < cantidadDestino)
             {
                 monedaDestino.SetCantidad(cantidadDestino, ejecucion);
@@ -75,7 +83,12 @@ namespace Dominio.Entidades
             }
         }
 
-        public void AgregarOrdenDeCompra(Moneda monedaAcomprar, decimal precio, decimal cantidad)
+        public void LimpiarOrdenes()
+        {
+            OrdenesDeCompraPorMoneda.Clear();
+        }
+
+        public void AgregarOrdenDeCompra(Moneda monedaAcomprar, decimal precio, decimal cantidad, bool esDeVenta)
         {
             OrdenesDeCompraPorMoneda.TryGetValue(monedaAcomprar, out List<Orden> ordenes);
             if (ordenes == null)
@@ -83,7 +96,18 @@ namespace Dominio.Entidades
                 ordenes = new List<Orden>();
                 OrdenesDeCompraPorMoneda[monedaAcomprar] = ordenes;
             }
-            ordenes.AddSorted(new Orden { Cantidad = cantidad, PrecioUnitario = precio, MonedaQueQuieroComprar = monedaAcomprar, MonedaQueQuieroVender = this });
+
+            var ordenDeCompra = new Orden
+            {
+                Cantidad = cantidad,
+                Relacion = esDeVenta ? monedaAcomprar.Nombre + "_" + Nombre : Nombre + "_" + monedaAcomprar.Nombre,
+                EsDeVenta = esDeVenta,
+                PrecioUnitario = precio,
+                MonedaQueQuieroComprar = monedaAcomprar,
+                MonedaQueQuieroVender = this
+            };
+            
+            ordenes.AddSorted(ordenDeCompra);
         }
 
         public override string ToString()
@@ -129,7 +153,7 @@ namespace Dominio.Entidades
                 if (aux == null)
                 {
                     mutex.WaitOne();
-                    aux = new DijkstraAux() { Cantidad = decimal.MinValue, OrdenesDeCompraMonedaAnterior = new List<Orden>() };
+                    aux = new DijkstraAux() { Cantidad = -10000, OrdenesDeCompraMonedaAnterior = new List<Orden>() };
                     DijkstraAux.Add(ejecucion, aux);
                     mutex.ReleaseMutex();
                 }

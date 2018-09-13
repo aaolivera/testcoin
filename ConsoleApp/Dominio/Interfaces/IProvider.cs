@@ -6,11 +6,10 @@ namespace Dominio.Interfaces
 {
     public interface IProvider
     {
-        Task ActualizarMonedas(IMercadoCargar mercado, List<string> exclude);
+        Task ActualizarMonedas(IMercadoCargar mercado, List<string> exclude, List<string> include);
         Task ActualizarOrdenes(IMercadoCargar mercado);
-
-        Task<List<Orden>> ObtenerOrdenesNecesarias(Moneda actual, Moneda siguiente, decimal inicial);
-        Task<decimal> EjecutarOrden(Orden i);
+        
+        Task EjecutarOrden(Orden i);
         Task<decimal> ConsultarSaldo(string moneda);
         Task<bool> HayOrdenesActivas(string relacion);
     }

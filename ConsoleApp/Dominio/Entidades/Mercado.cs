@@ -13,16 +13,18 @@ namespace Dominio.Entidades
         private List<IProvider> Providers { get; }
         private Dictionary<string, Moneda> MonedasPorNombre { get; }
         private List<string> MonedasExcluidas { get; }
+        private List<string> MonedasIncluidas { get; }
         private HashSet<string> RelacionesEntreMonedasHash { get; }
 
         public List<string> RelacionesEntreMonedas => RelacionesEntreMonedasHash.ToList();
         public List<Moneda> Monedas => MonedasPorNombre.Values.ToList();
 
-        public Mercado(List<IProvider> providers, List<string> monedasExlcuidas)
+        public Mercado(List<IProvider> providers, List<string> excluidas = null, List<string> incluidas = null)
         {
             this.Providers = new List<IProvider>(providers);
             this.MonedasPorNombre = new Dictionary<string, Moneda>();
-            this.MonedasExcluidas = new List<string>(monedasExlcuidas);
+            this.MonedasExcluidas = excluidas;
+            this.MonedasIncluidas = incluidas;
             this.RelacionesEntreMonedasHash = new HashSet<string>();
         }
 
@@ -30,7 +32,7 @@ namespace Dominio.Entidades
         {
             foreach (var p in Providers)
             {
-                await p.ActualizarMonedas(this, MonedasExcluidas);
+                await p.ActualizarMonedas(this, MonedasExcluidas, MonedasIncluidas);
             }
         }
 
@@ -54,7 +56,7 @@ namespace Dominio.Entidades
             }
         }
 
-        private Moneda ObtenerMoneda(string moneda)
+        public Moneda ObtenerMoneda(string moneda)
         {
             if (!MonedasPorNombre.TryGetValue(moneda, out Moneda retorno))
             {
@@ -64,63 +66,64 @@ namespace Dominio.Entidades
             return retorno;
         }
 
+        public void LimpiarOrdenes()
+        {
+            foreach (var moneda in Monedas)
+            {
+                moneda.LimpiarOrdenes();
+            }
+        }
+
         public void AgregarOrdenDeCompra(string monedaAcomprar, string monedaAVender, decimal precio, decimal cantidad)
         {
-            ObtenerMoneda(monedaAcomprar).AgregarOrdenDeCompra(ObtenerMoneda(monedaAVender), precio, cantidad);
+            ObtenerMoneda(monedaAcomprar).AgregarOrdenDeCompra(ObtenerMoneda(monedaAVender), precio, cantidad, false);
         }
 
         public void AgregarOrdenDeVenta(string monedaAVender, string monedaAComprar, decimal precio, decimal cantidad)
         {
-            AgregarOrdenDeCompra(monedaAComprar, monedaAVender, 1 / precio, precio * cantidad);
+            ObtenerMoneda(monedaAComprar).AgregarOrdenDeCompra(ObtenerMoneda(monedaAVender), 1 / precio, precio * cantidad, true);
         }
         
-        public List<Moneda> ObtenerOperacionOptima(string origen, string destino, decimal cantidad, out string ejecucionIda, out string ejecucionVuelta)
+        public List<Moneda> ObtenerOperacionOptima(Moneda origen, Moneda destino, decimal cantidad, out string ejecucionIda, out string ejecucionVuelta)
         {
-            ejecucionIda = (origen + destino).ToLower();
-            ejecucionVuelta = (destino + origen).ToLower();
-            var monedaOrigen = MonedasPorNombre[origen.ToLower()];
-            var monedaDestino = MonedasPorNombre[destino.ToLower()];
+            ejecucionIda = (origen.Nombre + destino.Nombre).ToLower();
+            ejecucionVuelta = (destino.Nombre + origen.Nombre).ToLower();
 
-            monedaOrigen.SetCantidad(cantidad, ejecucionIda);            
-            RecorrerMercado(new Queue<Moneda>(new List<Moneda> { monedaOrigen }), monedaDestino, ejecucionIda);
-            var ida = Recorrido(monedaDestino, ejecucionIda);
+            origen.SetCantidad(cantidad, ejecucionIda);            
+            RecorrerMercado(new Queue<Moneda>(new List<Moneda> { origen }), destino, ejecucionIda);
+            var ida = Recorrido(destino, ejecucionIda);
 
-            if(monedaDestino.Cantidad(ejecucionIda) > 0)
+            if(destino.Cantidad(ejecucionIda) > 0)
             {
-                monedaDestino.SetCantidad(monedaDestino.Cantidad(ejecucionIda), ejecucionVuelta);
-                RecorrerMercado(new Queue<Moneda>(new List<Moneda> { monedaDestino }), monedaOrigen, ejecucionVuelta);
-                var vuelta = Recorrido(monedaOrigen, ejecucionVuelta);
+                destino.SetCantidad(destino.Cantidad(ejecucionIda), ejecucionVuelta);
+                RecorrerMercado(new Queue<Moneda>(new List<Moneda> { destino }), origen, ejecucionVuelta);
+                var vuelta = Recorrido(origen, ejecucionVuelta);
+                vuelta.RemoveAt(0);
                 ida.AddRange(vuelta);
             }
             
             return ida;
         }
 
-        public async Task EjecutarMovimientos(List<Moneda> movimientos, decimal inicial)
+        public async Task EjecutarMovimientos(List<Moneda> movimientos, Moneda monedaDestino, string ejecucionIda, string ejecucionVuelta)
         {
-            var cantidad = inicial;
             var provider = Providers[0];
-            for (var i = 0; i < movimientos.Count - 1; i++)
+            movimientos.RemoveAt(0);
+            var ejecucion = ejecucionIda;
+            foreach(var actual in movimientos)
             {
-                var actual = movimientos[i];
-                var siguiente = movimientos[i + 1];
-
-                var ordenesNecesarias = await provider.ObtenerOrdenesNecesarias(actual, siguiente, cantidad);
-
-                var cantidadResultado = 0M;
+                var ordenesNecesarias = actual.OrdenesDeCompraMonedaAnterior(ejecucion);
+                if (actual.Nombre == monedaDestino.Nombre) ejecucion = ejecucionVuelta;
                 System.Console.WriteLine("https://yobit.net/en/trade/" + ordenesNecesarias.First().Relacion.Replace('_', '/').ToUpper());
                 foreach (var orden in ordenesNecesarias)
                 {
-                    cantidadResultado += await provider.EjecutarOrden(orden);
+                    await provider.EjecutarOrden(orden);
                 }
 
                 while (await provider.HayOrdenesActivas(ordenesNecesarias.First().Relacion))
                 {
-                    Thread.Sleep(1500);
+                    Thread.Sleep(100);
                 }
-
-                //cantidad = provider.ConsultarSaldo(siguiente.Nombre);
-                cantidad = cantidadResultado;
             }
         }
         

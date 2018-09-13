@@ -14,13 +14,13 @@ namespace Providers
     public class YobitProvider : IProvider
     {
         private readonly string info = @"https://yobit.net/api/3/info";
-        private readonly string depth = @"https://yobit.net/api/3/depth/{0}?ignore_invalid=1&limit=10";
+        private readonly string depth = @"https://yobit.net/api/3/depth/{0}?ignore_invalid=1&limit=3";
         private readonly string priv = @"https://yobit.net/tapi/";
 
         #region CARGA
-        public async Task ActualizarMonedas(IMercadoCargar mercado, List<string> exclude)
+        public async Task ActualizarMonedas(IMercadoCargar mercado, List<string> exclude, List<string> include)
         {
-            await WebProvider.DownloadPages(new List<string> { info }, x => CargarMonedas(x, mercado, exclude));
+            await WebProvider.DownloadPages(new List<string> { info }, x => CargarMonedas(x, mercado, exclude, include));
         }
 
         public async Task ActualizarOrdenes(IMercadoCargar mercado)
@@ -115,82 +115,24 @@ namespace Providers
             return false;
         }
 
-        public async Task<decimal> EjecutarOrden(Orden i)
+        public async Task EjecutarOrden(Orden i)
         {
-            var body = $"method=Trade&pair={i.Relacion}&type={(i.EsDeVenta ? "buy" : "sell")}&rate={i.PrecioUnitario.ToString("0.########", CultureInfo.InvariantCulture)}&amount={i.Cantidad.ToString("0.########", CultureInfo.InvariantCulture)}&nonce={{0}}";
+            string body;
+            if (i.EsDeVenta)
+            {
+                var cantidadVenta = i.Cantidad * i.PrecioUnitario;
+                var precioVenta = i.Cantidad / cantidadVenta;
+                body = $"method=Trade&pair={i.Relacion}&type=buy&rate={precioVenta.ToString("0.########", CultureInfo.InvariantCulture)}&amount={cantidadVenta.ToString("0.########", CultureInfo.InvariantCulture)}&nonce={{0}}";
+            }
+            else
+            {
+                body = $"method=Trade&pair={i.Relacion}&type=sell&rate={i.PrecioUnitario.ToString("0.########", CultureInfo.InvariantCulture)}&amount={i.Cantidad.ToString("0.########", CultureInfo.InvariantCulture)}&nonce={{0}}";
+            }
             System.Console.WriteLine(body);
             //await PostPage(priv, body);
-            return i.EsDeVenta ? i.Cantidad : Decimal.Round((i.Cantidad * i.PrecioUnitario) - (0.2M / 100 * (i.Cantidad * i.PrecioUnitario)));
-            
         }
 
-        public async Task<List<Orden>> ObtenerOrdenesNecesarias(Moneda actual, Moneda siguiente, decimal inicial)
-        {
-            var ordenesActivas = await ObtenerOrdenesActivas(actual, siguiente);
-            var ordenesNecesarias = new List<Orden>();
-            
-            var cantidadActual = 0M;
-
-            foreach (var orden in ordenesActivas)
-            {
-                if (orden.EsDeVenta)
-                {
-                    var cantidadActualQuePuedoGastar = Decimal.Round((inicial - 0.2M / 100 * inicial), 8, MidpointRounding.ToEven);
-                    var cantidadActualAgastarEnEstaOrden = 0M;
-                    var cantidadActualDeLaOrden = Decimal.Round(orden.Cantidad * orden.PrecioUnitario, 8, MidpointRounding.ToEven);
-                    
-                    if (cantidadActual + cantidadActualDeLaOrden < cantidadActualQuePuedoGastar)
-                    {
-                        cantidadActualAgastarEnEstaOrden = cantidadActualDeLaOrden;
-                    }
-                    else if (cantidadActual + cantidadActualDeLaOrden > cantidadActualQuePuedoGastar)
-                    {
-                        //OJO, aca puedo estar intentando emitir una orden muy chica
-                        cantidadActualAgastarEnEstaOrden = (cantidadActualQuePuedoGastar - cantidadActual);
-                        if (cantidadActualAgastarEnEstaOrden == 0) break;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                    orden.Cantidad = Decimal.Round(cantidadActualAgastarEnEstaOrden / orden.PrecioUnitario, 8, MidpointRounding.ToEven);
-                    cantidadActual += cantidadActualAgastarEnEstaOrden;
-                }
-                else
-                {
-                    var cantidadActualAVender = 0M;
-                    if (cantidadActual + orden.Cantidad < inicial)
-                    {
-                        cantidadActualAVender = orden.Cantidad;
-                    }
-                    else if (cantidadActual + orden.Cantidad > inicial)
-                    {
-                        cantidadActualAVender = (inicial - cantidadActual);
-                        if (cantidadActualAVender == 0) break;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                    orden.Cantidad = cantidadActualAVender;
-                    cantidadActual += cantidadActualAVender;
-                }
-                ordenesNecesarias.Add(orden);
-            }
-            return ordenesNecesarias;
-        }
-        
-        private async Task<List<Orden>> ObtenerOrdenesActivas(Moneda actual, Moneda siguiente)
-        {
-            var url = string.Format(depth, $"{actual.Nombre}_{siguiente.Nombre}-{siguiente.Nombre}_{actual.Nombre}");
-            var resultado = new List<Orden>();
-
-            await WebProvider.DownloadPages(new List<string> { url }, x => CargarOrdenes(x, actual, siguiente, resultado));
-            
-            return resultado;
-        }
-        
-        private void CargarMonedas(IEnumerable<string> response, IMercadoCargar mercado, List<string> exclude)
+        private void CargarMonedas(IEnumerable<string> response, IMercadoCargar mercado, List<string> exclude, List<string> include)
         {
             try
             {
@@ -199,7 +141,8 @@ namespace Providers
                 foreach (var relacion in pares.pairs)
                 {
                     var monedas = relacion.Name.Split('_');
-                    if (!exclude.Contains(monedas[0]) && !exclude.Contains(monedas[1]))
+                    if ((exclude == null || (!exclude.Contains(monedas[0]) && !exclude.Contains(monedas[1]) && !exclude.Contains(relacion.Name))) 
+                        && (include == null || (include.Contains(monedas[0]) || include.Contains(monedas[1]) || include.Contains(relacion.Name))))
                     {
                         mercado.AgregarRelacionEntreMonedas(monedas[0], monedas[1]);
                     }
@@ -210,60 +153,7 @@ namespace Providers
                 Console.WriteLine("Error al mapear response CargarMonedas");
             }
         }
-
-
-        private void CargarOrdenes(IEnumerable<string> response, Moneda actual, Moneda siguiente, List<Orden> resultado)
-        {
-            try
-            {
-                string r = response.First();
-                dynamic ordenes = JsonConvert.DeserializeObject(r);
-                foreach (var ordenesPorMoneda in ordenes)
-                {
-                    var monedas = ordenesPorMoneda.Name.Split('_');
-                    var ventas = ordenesPorMoneda.Value["asks"];
-                    var compras = ordenesPorMoneda.Value["bids"];
-
-                    if (ventas != null && monedas[1] == actual.Nombre)
-                    {
-                        foreach (var ordenVenta in ventas)
-                        {
-                            resultado.Add(new Orden
-                            {
-                                MonedaQueQuieroVender = actual,
-                                MonedaQueQuieroComprar = siguiente,
-                                PrecioUnitario = (decimal)ordenVenta[0].Value, // de la moneda a vender
-                                Cantidad = (decimal)ordenVenta[1].Value,
-                                EsDeVenta = true,
-                                Relacion = ordenesPorMoneda.Name
-                            });
-                        }
-                    }
-
-                    if (compras != null && monedas[0] == actual.Nombre)
-                    {
-                        foreach (var ordenCompra in compras)
-                        {
-                            resultado.Add(new Orden
-                            {
-                                MonedaQueQuieroVender = actual,
-                                MonedaQueQuieroComprar = siguiente,
-                                PrecioUnitario = (decimal)ordenCompra[0].Value, // de la moneda a comprar
-                                Cantidad = (decimal)ordenCompra[1].Value,
-                                EsDeVenta = false,
-                                Relacion = ordenesPorMoneda.Name
-                            });
-                        }
-                    }
-                }
-            }
-            catch
-            {
-                Console.WriteLine("Error al mapear response CargarOrdenes");
-            }
-            
-        }
-
+        
         #region getpost
 
         private static async Task<dynamic> PostPage(string url, string body)

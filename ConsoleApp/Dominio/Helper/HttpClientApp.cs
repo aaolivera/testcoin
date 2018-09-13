@@ -18,6 +18,7 @@ namespace Dominio.Helper
         })
         {
             this.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
+            this.Timeout = new System.TimeSpan(0,0,0,15);
         }
 
         public async Task<byte[]> Get(string url)
