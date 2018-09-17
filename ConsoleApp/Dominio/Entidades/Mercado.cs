@@ -114,7 +114,7 @@ namespace Dominio.Entidades
             {
                 var ordenesNecesarias = actual.OrdenesDeCompraMonedaAnterior(ejecucion);
                 if (actual.Nombre == monedaDestino.Nombre) ejecucion = ejecucionVuelta;
-                System.Console.WriteLine("https://yobit.net/en/trade/" + ordenesNecesarias.First().Relacion.Replace('_', '/').ToUpper());
+                Console.WriteLine("https://yobit.net/en/trade/" + ordenesNecesarias.First().Relacion.Replace('_', '/').ToUpper());
                 foreach (var orden in ordenesNecesarias)
                 {
                     await provider.EjecutarOrden(orden);
@@ -122,8 +122,9 @@ namespace Dominio.Entidades
 
                 while (await provider.HayOrdenesActivas(ordenesNecesarias.First().Relacion))
                 {
-                    Thread.Sleep(100);
+                    Thread.Sleep(200);
                 }
+                Console.WriteLine("ok");
             }
         }
         

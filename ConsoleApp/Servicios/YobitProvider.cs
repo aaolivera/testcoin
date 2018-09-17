@@ -14,7 +14,7 @@ namespace Providers
     public class YobitProvider : IProvider
     {
         private readonly string info = @"https://yobit.net/api/3/info";
-        private readonly string depth = @"https://yobit.net/api/3/depth/{0}?ignore_invalid=1&limit=3";
+        private readonly string depth = @"https://yobit.net/api/3/depth/{0}?ignore_invalid=1&limit=1";
         private readonly string priv = @"https://yobit.net/tapi/";
 
         #region CARGA
@@ -108,11 +108,11 @@ namespace Providers
 
         public async Task<bool> HayOrdenesActivas(string relacion)
         {
-            //var body = $"method=ActiveOrders&pair={relacion}&nonce={{0}}";
-            //dynamic response = await PostPage(priv, body);
-            //var resultado = (response != null && response["return"] != null);
-            //return resultado;
-            return false;
+            var body = $"method=ActiveOrders&pair={relacion}&nonce={{0}}";
+            dynamic response = await PostPage(priv, body);
+            var resultado = (response != null && response["return"] != null);
+            return resultado;
+            //return false;
         }
 
         public async Task EjecutarOrden(Orden i)
@@ -129,7 +129,7 @@ namespace Providers
                 body = $"method=Trade&pair={i.Relacion}&type=sell&rate={i.PrecioUnitario.ToString("0.########", CultureInfo.InvariantCulture)}&amount={i.Cantidad.ToString("0.########", CultureInfo.InvariantCulture)}&nonce={{0}}";
             }
             System.Console.WriteLine(body);
-            //await PostPage(priv, body);
+            var respuesta = await PostPage(priv, body);
         }
 
         private void CargarMonedas(IEnumerable<string> response, IMercadoCargar mercado, List<string> exclude, List<string> include)
@@ -161,8 +161,8 @@ namespace Providers
             try
             {
                 var bodyNonce = string.Format(body, GenerateNonce());
-                var key = "D9840F8C5CBA7A19BD2E7EFD79140F0F";
-                var secret = "f796a8118682696bb0efe51cb5bb802e";
+                var key = "D618EE268266DF1AA1F4454A4F14E880";
+                var secret = "2957796d122670d9f8526e083cfa26fc";
                 var headers = new Dictionary<string, string>
                 {
                     {"Content-Type", "application/x-www-form-urlencoded" },
@@ -170,7 +170,9 @@ namespace Providers
                     {"Sign", bodyNonce.HmacShaDigest(secret) }
                 };
                 var client = new HttpClientApp();
-                return await client.PostAsync(url, bodyNonce, headers);
+                var json = await client.PostAsync(url, bodyNonce, headers);
+                return JsonConvert.DeserializeObject<dynamic>(json);
+
             }
             catch (Exception e)
             {

@@ -86,6 +86,7 @@ namespace Dominio.Entidades
         public void LimpiarOrdenes()
         {
             OrdenesDeCompraPorMoneda.Clear();
+            DijkstraAux.Clear();
         }
 
         public void AgregarOrdenDeCompra(Moneda monedaAcomprar, decimal precio, decimal cantidad, bool esDeVenta)

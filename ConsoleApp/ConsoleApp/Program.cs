@@ -14,29 +14,36 @@ namespace ConsoleApp
         static async Task Main(string[] args)
         {
                 var providers = new List<IProvider> { new YobitProvider() };
-                //var mercado = new Mercado(providers, new List<string> { "dash" }, new List<string> { "edr2_btc", "edr2_ltc", "ltc_btc" });
-            var mercado = new Mercado(providers, new List<string> { "btcu" });
+
+            //Console.WriteLine(await providers[0].ConsultarSaldo("btc"));
+
+            //var mercado = new Mercado(providers, new List<string> { "dash" }, new List<string> { "edr2_btc", "edr2_ltc", "ltc_btc" });
+
+
+            var mercado = new Mercado(providers, new List<string> { "btcu", "edr2_ltc" });
             await mercado.ActualizarMonedas();
-                while (true)
+            while (true)
+            {
+                mercado.LimpiarOrdenes();
+                await mercado.ActualizarOrdenes();
+
+                var monedaPilar = mercado.ObtenerMoneda("btc");
+
+                System.Console.WriteLine("Iniciar busqueda");
+                var inicial = 0.00010022M;
+
+                var tasks = new List<Task>();
+                foreach (var moneda in mercado.Monedas)
                 {
-                    mercado.LimpiarOrdenes();
-                    await mercado.ActualizarOrdenes();
-
-                    var monedaPilar = mercado.ObtenerMoneda("btc");
-
-                    System.Console.WriteLine("Iniciar busqueda");
-                    var inicial = 0.0001002M;
-
-                    var tasks = new List<Task>();
-                    foreach (var moneda in mercado.Monedas)
+                    if (await ChequearMonedaAsync(mercado, monedaPilar, inicial, moneda))
                     {
-                        await ChequearMonedaAsync(mercado, monedaPilar, inicial, moneda);
+                        break;
                     }
-                    System.Console.WriteLine("Buscando...");
-                    Task.WaitAll(tasks.ToArray());
-                    System.Console.WriteLine("Fin");
-                    System.Console.ReadLine();
                 }
+                System.Console.WriteLine("Buscando...");
+                Task.WaitAll(tasks.ToArray());
+                System.Console.WriteLine("Fin");
+            }
         }
 
         //private static async Task ChequearMonedaAsync(Mercado mercado, string monedaPilar, decimal inicial, string monedaDestino)
@@ -47,13 +54,13 @@ namespace ConsoleApp
         //    }));
         //}
         
-        private static async Task ChequearMonedaAsync(Mercado mercado, Moneda monedaPilar, decimal inicial, Moneda monedaDestino)
+        private static async Task<bool> ChequearMonedaAsync(Mercado mercado, Moneda monedaPilar, decimal inicial, Moneda monedaDestino)
         {
             
             var movimientos = mercado.ObtenerOperacionOptima(monedaPilar, monedaDestino, inicial, out string ejecucionIda, out string ejecucionvuelta);
             var cantidadDestino = movimientos.First().Cantidad(ejecucionvuelta);
             var porcentaje = (((cantidadDestino - inicial) * 100) / inicial);
-            if (porcentaje > 1 && movimientos.Count <= 6)
+            if (porcentaje > 0.5M && movimientos.Count < 6)
             {
                 var texto = $"{(movimientos.Count).ToString("00")}|{porcentaje.ToString("00.00")}|";
                 var ida = true;
@@ -67,8 +74,10 @@ namespace ConsoleApp
                 System.Console.WriteLine(texto);
                 await mercado.EjecutarMovimientos(movimientos, monedaDestino, ejecucionIda, ejecucionvuelta);
                 System.Console.WriteLine("////////////////////////////////////////////////////////////////");
-                //System.Console.ReadLine();
+                System.Console.ReadLine();
+                return true;
             };
+            return false;
         }
     }
 }
