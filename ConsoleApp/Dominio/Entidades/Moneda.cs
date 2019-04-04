@@ -14,6 +14,8 @@ namespace Dominio.Entidades
 
         //Variable auxiliar dijktra
         public Dictionary<string, DijkstraAux> DijkstraAux { get; set; }
+        public static decimal CantidadDefault { get { return Entidades.DijkstraAux.CantidadDefault; } }
+
         private static Mutex mutex = new Mutex();
 
         public Moneda(string nombre)
@@ -22,31 +24,45 @@ namespace Dominio.Entidades
             DijkstraAux = new Dictionary<string, DijkstraAux>();
             Nombre = nombre;
         }
-
-
-        
+               
         public bool Comprar(Moneda monedaDestino, string ejecucion)
         {
+            if (Cantidad(ejecucion) == decimal.MaxValue) return false;
+            var retorno = Convertir(monedaDestino, ejecucion, out List<Orden> ordenesDecompraNecesarias, out decimal cantidadOrigen, out decimal cantidadDestino);
+            if (!retorno) return false;
+
+            if (cantidadOrigen == Cantidad(ejecucion) && monedaDestino.Cantidad(ejecucion) > cantidadDestino)
+            {
+                monedaDestino.SetCantidad(cantidadDestino, ejecucion);
+                monedaDestino.SetOrdenesDeCompraMonedaAnterior(ordenesDecompraNecesarias, ejecucion);
+                return true;
+            }
+            return false;
+        }
+
+        private bool Convertir(Moneda monedaDestino, string ejecucion, out List<Orden> ordenesDecompraNecesarias, out decimal cantidadOrigen, out decimal cantidadDestino)
+        {
+            cantidadDestino = 0M;
+            cantidadOrigen = 0M;
+            ordenesDecompraNecesarias = new List<Orden>();
+            var cantidadActual = Cantidad(ejecucion);
             OrdenesDeCompraPorMoneda.TryGetValue(monedaDestino, out List<Orden> ordenesDeCompra);
 
-            if (ordenesDeCompra == null) return false;
-
-            var ordenesDecompraNecesarias = new List<Orden>();
-            var cantidadDestino = 0M;
-            var cantidadOrigen = 0M;
+            if (ordenesDeCompra == null || !ordenesDeCompra.Any()) return false;
+            
             var i = 0;
             foreach (var orden in ordenesDeCompra)
             {
                 i++;
                 var copiaDeOrden = orden.Clonar();
                 var cantidadOrigenDeOrdenActual = 0M;
-                if (cantidadOrigen + copiaDeOrden.Cantidad < Cantidad(ejecucion))
+                if (cantidadOrigen + copiaDeOrden.Cantidad > cantidadActual)
                 {
                     cantidadOrigenDeOrdenActual = copiaDeOrden.Cantidad;
                 }
-                else if (cantidadOrigen + copiaDeOrden.Cantidad > Cantidad(ejecucion))
+                else if (cantidadOrigen + copiaDeOrden.Cantidad < cantidadActual)
                 {
-                    cantidadOrigenDeOrdenActual = (Cantidad(ejecucion) - cantidadOrigen);
+                    cantidadOrigenDeOrdenActual = (cantidadActual - cantidadOrigen);
                     if (cantidadOrigenDeOrdenActual == 0) break;
                     copiaDeOrden.Cantidad = cantidadOrigenDeOrdenActual;
                     if (copiaDeOrden.EsDeVenta)
@@ -58,21 +74,15 @@ namespace Dominio.Entidades
                 {
                     break;
                 }
-                
+
                 cantidadDestino += cantidadOrigenDeOrdenActual * copiaDeOrden.PrecioUnitario;
                 cantidadOrigen += cantidadOrigenDeOrdenActual;
                 ordenesDecompraNecesarias.Add(copiaDeOrden);
             }
-            
+            if (!ordenesDecompraNecesarias.Any()) return false;
+
             cantidadDestino = cantidadDestino - (ordenesDecompraNecesarias.First().EsDeVenta ? 0.199600798M : 0.2M) / 100 * cantidadDestino;
-            
-            if (cantidadOrigen == Cantidad(ejecucion) && monedaDestino.Cantidad(ejecucion) < cantidadDestino)
-            {
-                monedaDestino.SetCantidad(cantidadDestino, ejecucion);
-                monedaDestino.SetOrdenesDeCompraMonedaAnterior(ordenesDecompraNecesarias, ejecucion);
-                return true;
-            }
-            return false;
+            return true;
         }
         
         public void AgregarRelacionPorMoneda(Moneda destino)
@@ -116,9 +126,20 @@ namespace Dominio.Entidades
             return "Moneda: " + Nombre + " - Cantidad: ";
         }
 
-        public void SetCantidad (decimal cantidad, string ejecucion)
+        public bool EsMonedaOrigen(string ejecucion, bool? es = null)
         {
-            GetAux(ejecucion).Cantidad = cantidad;
+            if(es.HasValue)GetAux(ejecucion).EsMonedaOrigen = es.Value;
+            return GetAux(ejecucion).EsMonedaOrigen;
+        }
+        public bool Recorrida(string ejecucion, bool? es = null)
+        {
+            if (es.HasValue) GetAux(ejecucion).Recorrida = es.Value;
+            return GetAux(ejecucion).Recorrida;
+        }
+        public bool EnCola(string ejecucion, bool? es = null)
+        {
+            if (es.HasValue) GetAux(ejecucion).EnCola = es.Value;
+            return GetAux(ejecucion).EnCola;
         }
 
         public void SetOrdenesDeCompraMonedaAnterior(List<Orden> ordenes, string ejecucion)
@@ -131,19 +152,20 @@ namespace Dominio.Entidades
             return GetAux(ejecucion).OrdenesDeCompraMonedaAnterior;
         }
 
+        public void SetCantidad(decimal cantidad, string ejecucion)
+        {
+            GetAux(ejecucion).Cantidad = cantidad;
+            GetAux(ejecucion).CantidadPositiva = cantidad * -1;
+        }
+
         public decimal Cantidad(string ejecucion)
         {
             return GetAux(ejecucion).Cantidad;
         }
 
-        public void Vicitar(string ejecucion)
+        public decimal CantidadPositiva(string ejecucion)
         {
-            GetAux(ejecucion).Marcado = true;
-        }
-
-        public bool Vicitado(string ejecucion)
-        {
-            return GetAux(ejecucion).Marcado;
+            return GetAux(ejecucion).CantidadPositiva;
         }
 
         private DijkstraAux GetAux(string ejecucion)
@@ -154,14 +176,14 @@ namespace Dominio.Entidades
                 if (aux == null)
                 {
                     mutex.WaitOne();
-                    aux = new DijkstraAux() { Cantidad = -10000, OrdenesDeCompraMonedaAnterior = new List<Orden>() };
+                    aux = new DijkstraAux();
                     DijkstraAux.Add(ejecucion, aux);
                     mutex.ReleaseMutex();
                 }
 
                 return aux;
             }
-            catch
+            catch(Exception e)
             {
                 return GetAux(ejecucion);
             }

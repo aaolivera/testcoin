@@ -1,4 +1,5 @@
-﻿using Dominio.Interfaces;
+﻿using Dominio.Helper;
+using Dominio.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -76,35 +77,14 @@ namespace Dominio.Entidades
 
         public void AgregarOrdenDeCompra(string monedaAcomprar, string monedaAVender, decimal precio, decimal cantidad)
         {
-            ObtenerMoneda(monedaAcomprar).AgregarOrdenDeCompra(ObtenerMoneda(monedaAVender), precio, cantidad, false);
+            ObtenerMoneda(monedaAcomprar).AgregarOrdenDeCompra(ObtenerMoneda(monedaAVender), precio, cantidad * -1, false);
         }
 
         public void AgregarOrdenDeVenta(string monedaAVender, string monedaAComprar, decimal precio, decimal cantidad)
         {
-            ObtenerMoneda(monedaAComprar).AgregarOrdenDeCompra(ObtenerMoneda(monedaAVender), 1 / precio, precio * cantidad, true);
+            ObtenerMoneda(monedaAComprar).AgregarOrdenDeCompra(ObtenerMoneda(monedaAVender), 1 / precio, precio * cantidad * -1, true);
         }
         
-        public List<Moneda> ObtenerOperacionOptima(Moneda origen, Moneda destino, decimal cantidad, out string ejecucionIda, out string ejecucionVuelta)
-        {
-            ejecucionIda = (origen.Nombre + destino.Nombre).ToLower();
-            ejecucionVuelta = (destino.Nombre + origen.Nombre).ToLower();
-
-            origen.SetCantidad(cantidad, ejecucionIda);            
-            RecorrerMercado(new Queue<Moneda>(new List<Moneda> { origen }), destino, ejecucionIda);
-            var ida = Recorrido(destino, ejecucionIda);
-
-            if(destino.Cantidad(ejecucionIda) > 0)
-            {
-                destino.SetCantidad(destino.Cantidad(ejecucionIda), ejecucionVuelta);
-                RecorrerMercado(new Queue<Moneda>(new List<Moneda> { destino }), origen, ejecucionVuelta);
-                var vuelta = Recorrido(origen, ejecucionVuelta);
-                vuelta.RemoveAt(0);
-                ida.AddRange(vuelta);
-            }
-            
-            return ida;
-        }
-
         public async Task EjecutarMovimientos(List<Moneda> movimientos, Moneda monedaDestino, string ejecucionIda, string ejecucionVuelta)
         {
             var provider = Providers[0];
@@ -128,39 +108,77 @@ namespace Dominio.Entidades
             }
         }
         
-        private void RecorrerMercado(Queue<Moneda> stack, Moneda destino, string ejecucion)
+        public List<Moneda> ObtenerOperacionOptima(Moneda origen, Moneda destino, decimal cantidad, out string ejecucionIda, out string ejecucionVuelta)
         {
-            while (stack.Any())
-            {
-                var monedaActual = stack.Dequeue();
+            ejecucionIda = origen.Nombre.ToLower();
+            ejecucionVuelta = (destino.Nombre + origen.Nombre).ToLower();
+            cantidad = cantidad * -1;
+            var timestamp = DateTime.Now.Ticks + ejecucionVuelta;
 
-                if(monedaActual == destino && stack.Any())
+            var cantidadDestino = destino.Cantidad(ejecucionIda);
+
+            if (cantidadDestino == Moneda.CantidadDefault && !origen.EsMonedaOrigen(ejecucionIda))
+            {
+                origen.SetCantidad(cantidad, ejecucionIda);
+                origen.EsMonedaOrigen(ejecucionIda, true);
+                RecorrerMercado(ejecucionIda);
+                cantidadDestino = destino.Cantidad(ejecucionIda);
+            }
+            
+            if (cantidadDestino != Moneda.CantidadDefault)
+            {
+                destino.SetCantidad(cantidadDestino, ejecucionVuelta);
+                destino.EsMonedaOrigen(ejecucionVuelta, true);
+                RecorrerMercado(ejecucionVuelta);
+
+                if(origen.Cantidad(ejecucionVuelta) > cantidad)
                 {
-                    if (!stack.Contains(monedaActual))
-                    {
-                        stack.Enqueue(destino);
-                    }
-                    continue;
-                }
-                monedaActual.Vicitar(ejecucion);
-                foreach (var n in monedaActual.OrdenesDeCompraPorMoneda.Where(c => !c.Key.Vicitado(ejecucion) && c.Value.Any()))
-                {
-                    var monedaAComprar = n.Key;
-                    if (monedaActual.Comprar(monedaAComprar, ejecucion))
-                    {
-                        stack.Enqueue(monedaAComprar);
-                    }
+                    var ida = Recorrido(destino, ejecucionIda, timestamp);
+                    var vuelta = Recorrido(origen, ejecucionVuelta, timestamp);
+
+                    vuelta.RemoveAt(0);
+                    ida.AddRange(vuelta);
+                    return ida;
                 }
             }
+            return new List<Moneda>();
         }
 
-        private List<Moneda> Recorrido(Moneda nodo, string ejecucion)
+        private void RecorrerMercado(string ejecucion)
         {
-            if (nodo.OrdenesDeCompraMonedaAnterior(ejecucion) == null || !nodo.OrdenesDeCompraMonedaAnterior(ejecucion).Any())
+            //Algoritmo de Bellman - Ford
+            Console.WriteLine($"////////////////////{ejecucion}////////////////////////////");
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            var i = 1;
+            var monedas = Monedas.Where(d => !d.EsMonedaOrigen(ejecucion));
+            for (; i < Monedas.Count - 1; i++)
+            {
+                var doItAgain = false;
+                foreach (var monedaActual in monedas)
+                {
+                    foreach (var otraMoneda in monedaActual.OrdenesDeCompraPorMoneda)
+                    {
+                        if (otraMoneda.Key.Comprar(monedaActual, ejecucion))
+                        {
+                            doItAgain = true;
+                        }
+                    }
+                }
+                if (!doItAgain) break;
+            }
+            stopwatch.Stop();
+            Console.WriteLine($"ChequearMoneda {ejecucion} en {stopwatch.ElapsedMilliseconds * 0.001M} con {i} loops");
+        }
+
+        private List<Moneda> Recorrido(Moneda nodo, string ejecucion, string timestamp)
+        {
+            if (nodo.OrdenesDeCompraMonedaAnterior(ejecucion) == null || !nodo.OrdenesDeCompraMonedaAnterior(ejecucion).Any() || nodo.Recorrida(ejecucion + timestamp))
             {
                 return new List<Moneda>() { nodo };
             }
-            var lista = Recorrido(nodo.OrdenesDeCompraMonedaAnterior(ejecucion).First().MonedaQueQuieroVender, ejecucion);
+            var monedaAVender = nodo.OrdenesDeCompraMonedaAnterior(ejecucion).First().MonedaQueQuieroVender;
+            nodo.Recorrida(ejecucion + timestamp, true);
+            var lista = Recorrido(monedaAVender, ejecucion, timestamp);
             lista.Add(nodo);
             return lista;
         }

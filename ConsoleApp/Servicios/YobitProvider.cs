@@ -60,6 +60,7 @@ namespace Providers
             {
                 foreach (string response in responses)
                 {
+                    
                     dynamic relaciones = JsonConvert.DeserializeObject<dynamic>(response);
                     foreach (dynamic relacion in relaciones)
                     {
@@ -68,6 +69,7 @@ namespace Providers
                         var monedas = ordenesPorMoneda.Name.Split('_');
                         var ventas = ordenesPorMoneda.Value["asks"];
                         var compras = ordenesPorMoneda.Value["bids"];
+                        //Console.WriteLine($"Cargando:{ordenesPorMoneda.Name}, ventas:{ventas.Count}, compras:{compras.Count}");
 
                         if (ventas != null)
                         {  
@@ -108,11 +110,11 @@ namespace Providers
 
         public async Task<bool> HayOrdenesActivas(string relacion)
         {
-            var body = $"method=ActiveOrders&pair={relacion}&nonce={{0}}";
-            dynamic response = await PostPage(priv, body);
-            var resultado = (response != null && response["return"] != null);
-            return resultado;
-            //return false;
+            //var body = $"method=ActiveOrders&pair={relacion}&nonce={{0}}";
+            //dynamic response = await PostPage(priv, body);
+            //var resultado = (response != null && response["return"] != null);
+            //return resultado;
+            return false;
         }
 
         public async Task EjecutarOrden(Orden i)
@@ -120,16 +122,17 @@ namespace Providers
             string body;
             if (i.EsDeVenta)
             {
-                var cantidadVenta = i.Cantidad * i.PrecioUnitario;
-                var precioVenta = i.Cantidad / cantidadVenta;
+                var cantidadVenta = i.Cantidad * -1 * i.PrecioUnitario;
+                var precioVenta = i.Cantidad  * -1 / cantidadVenta;
                 body = $"method=Trade&pair={i.Relacion}&type=buy&rate={precioVenta.ToString("0.########", CultureInfo.InvariantCulture)}&amount={cantidadVenta.ToString("0.########", CultureInfo.InvariantCulture)}&nonce={{0}}";
             }
             else
             {
-                body = $"method=Trade&pair={i.Relacion}&type=sell&rate={i.PrecioUnitario.ToString("0.########", CultureInfo.InvariantCulture)}&amount={i.Cantidad.ToString("0.########", CultureInfo.InvariantCulture)}&nonce={{0}}";
+                var cantidadCompra = i.Cantidad * -1;
+                body = $"method=Trade&pair={i.Relacion}&type=sell&rate={i.PrecioUnitario.ToString("0.########", CultureInfo.InvariantCulture)}&amount={cantidadCompra.ToString("0.########", CultureInfo.InvariantCulture)}&nonce={{0}}";
             }
             System.Console.WriteLine(body);
-            var respuesta = await PostPage(priv, body);
+            //var respuesta = await PostPage(priv, body);
         }
 
         private void CargarMonedas(IEnumerable<string> response, IMercadoCargar mercado, List<string> exclude, List<string> include)

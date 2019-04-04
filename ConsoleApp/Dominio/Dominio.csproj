@@ -42,11 +42,14 @@
   <ItemGroup>
     <Compile Include="Dtos\ProxyResult.cs" />
     <Compile Include="Entidades\DijkstraAux.cs" />
+    <Compile Include="Entidades\Jugada.cs" />
     <Compile Include="Entidades\Mercado.cs" />
     <Compile Include="Entidades\Orden.cs" />
     <Compile Include="Entidades\Moneda.cs" />
     <Compile Include="Helper\HttpClientApp.cs" />
+    <Compile Include="Helper\IComparableE.cs" />
     <Compile Include="Helper\NavigationList.cs" />
+    <Compile Include="Helper\PriorityQueue.cs" />
     <Compile Include="Helper\StringExt.cs" />
     <Compile Include="Helper\ListExt.cs" />
     <Compile Include="Interfaces\IMercado.cs" />
