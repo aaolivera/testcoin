@@ -4,7 +4,7 @@ namespace Dominio.Entidades
 {
     public class DijkstraAux
     {
-        public static decimal CantidadDefault => decimal.MinValue;
+        public static decimal CantidadDefault => decimal.MaxValue;
         public decimal Cantidad { get; set; }
         public List<Orden> OrdenesDeCompraMonedaAnterior { get; set; }
         public bool EsMonedaOrigen { get; set; }

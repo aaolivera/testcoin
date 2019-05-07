@@ -53,19 +53,22 @@ namespace ConsoleApp
 
         private static void ChequearMoneda(Mercado mercado, Moneda monedaPilar, decimal inicial, Moneda monedaDestino)
         {
-            System.Console.WriteLine("--//" + monedaPilar.Nombre + "-" + monedaDestino.Nombre + "//--");
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             var movimientos = mercado.ObtenerOperacionOptima(monedaPilar, monedaDestino, inicial, out string ejecucionIda, out string ejecucionvuelta);
-            var monedaInicial = movimientos.First();
-            var cantidadDestino = monedaInicial.CantidadPositiva(ejecucionvuelta);
-
-            if (monedaInicial.Nombre == monedaPilar.Nombre && cantidadDestino > inicial)
+            if(movimientos.Any())
             {
-                var porcentaje = (((cantidadDestino - inicial) * 100) / inicial);
-                //if (porcentaje > 0)
-                //{
-                var texto = $"{(movimientos.Count).ToString("00")}|{porcentaje.ToString("00.00")}|";
+                Console.WriteLine("--//" + monedaPilar.Nombre + "-" + monedaDestino.Nombre + "//--");
+
+                var monedaInicial = movimientos.First();
+                var cantidadDestino = monedaInicial.CantidadPositiva(ejecucionvuelta);
+
+                if (monedaInicial.Nombre == monedaPilar.Nombre && cantidadDestino > inicial)
+                {
+                    var porcentaje = (((cantidadDestino - inicial) * 100) / inicial);
+                    //if (porcentaje > 0)
+                    //{
+                    var texto = $"{(movimientos.Count).ToString("00")}|{porcentaje.ToString("00.00")}|";
                     var ida = true;
                     foreach (var m in movimientos)
                     {
@@ -73,14 +76,16 @@ namespace ConsoleApp
                         texto += $"({m.Nombre}:{m.CantidadPositiva(ida ? ejecucionIda : ejecucionvuelta).ToString("F08", CultureInfo.InvariantCulture)})";
                         if (m.Nombre == monedaDestino.Nombre && ida) ida = false;
                     }
-                    System.Console.WriteLine(texto);
+                    Console.WriteLine(texto);
                     mercado.EjecutarMovimientos(movimientos, monedaDestino, ejecucionIda, ejecucionvuelta).Wait();
                     //return true;
-                //};
+                    //};
+                }
             }
+           
 
             //stopwatch.Stop();
-            Console.WriteLine($"ChequearMoneda {monedaDestino.Nombre} en " + stopwatch.ElapsedMilliseconds * 0.001M);
+            //Console.WriteLine($"ChequearMoneda {monedaDestino.Nombre} en " + stopwatch.ElapsedMilliseconds * 0.001M);
             //return false;
         }
     }

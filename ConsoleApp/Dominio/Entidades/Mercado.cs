@@ -128,16 +128,20 @@ namespace Dominio.Entidades
             if (cantidadDestino != Moneda.CantidadDefault)
             {
                 destino.SetCantidad(cantidadDestino, ejecucionVuelta);
-                destino.EsMonedaOrigen(ejecucionVuelta, true);
-                RecorrerMercado(ejecucionVuelta);
+                destino.Comprar(origen, ejecucionVuelta);
+                //destino.EsMonedaOrigen(ejecucionVuelta, true);
+                //RecorrerMercado(ejecucionVuelta);
 
-                if(origen.Cantidad(ejecucionVuelta) > cantidad)
+                Console.WriteLine($"Inicio con {origen.Nombre}({origen.CantidadPositiva(ejecucionIda)}) termino con ({origen.CantidadPositiva(ejecucionVuelta)})");
+
+                if (origen.CantidadPositiva(ejecucionVuelta) > cantidad)
                 {
                     var ida = Recorrido(destino, ejecucionIda, timestamp);
-                    var vuelta = Recorrido(origen, ejecucionVuelta, timestamp);
+                    //    var vuelta = Recorrido(origen, ejecucionVuelta, timestamp);
 
-                    vuelta.RemoveAt(0);
-                    ida.AddRange(vuelta);
+                    //vuelta.RemoveAt(0);
+                    //    ida.AddRange(vuelta);
+                    ida.Add(origen);
                     return ida;
                 }
             }
@@ -147,7 +151,7 @@ namespace Dominio.Entidades
         private void RecorrerMercado(string ejecucion)
         {
             //Algoritmo de Bellman - Ford
-            Console.WriteLine($"////////////////////{ejecucion}////////////////////////////");
+            //Console.WriteLine($"////////////////////{ejecucion}////////////////////////////");
             Stopwatch stopwatch = Stopwatch.StartNew();
             var i = 1;
             var monedas = Monedas.Where(d => !d.EsMonedaOrigen(ejecucion));
@@ -164,10 +168,13 @@ namespace Dominio.Entidades
                         }
                     }
                 }
+                ImprimirGrafo(ejecucion, Monedas.First(x => x.EsMonedaOrigen(ejecucion)), DateTime.Now.Ticks + "imp");
+                Console.WriteLine("------------------------------------------");
                 if (!doItAgain) break;
             }
+
             stopwatch.Stop();
-            Console.WriteLine($"ChequearMoneda {ejecucion} en {stopwatch.ElapsedMilliseconds * 0.001M} con {i} loops");
+            //Console.WriteLine($"ChequearMoneda {ejecucion} en {stopwatch.ElapsedMilliseconds * 0.001M} con {i} loops");
         }
 
         private List<Moneda> Recorrido(Moneda nodo, string ejecucion, string timestamp)
@@ -181,6 +188,23 @@ namespace Dominio.Entidades
             var lista = Recorrido(monedaAVender, ejecucion, timestamp);
             lista.Add(nodo);
             return lista;
+        }
+
+        private void ImprimirGrafo(string ejecucion, Moneda inicial, string timestamp, int tab = 0)
+        {
+            inicial.Recorrida(timestamp, true);
+            foreach (var m in inicial.OrdenesDeCompraPorMoneda)
+            {
+                var monedaAnterior = m.Key.OrdenesDeCompraMonedaAnterior(ejecucion).FirstOrDefault()?.MonedaQueQuieroVender;
+                if (monedaAnterior != null && monedaAnterior == inicial && m.Key.Cantidad(ejecucion) != Moneda.CantidadDefault)
+                {
+                    var linea = $"{inicial.Nombre}({inicial.Cantidad(ejecucion)})->{m.Key.Nombre}({m.Key.Cantidad(ejecucion)})";
+                    linea = linea.PadLeft(linea.Length + tab, '-');
+                    Console.WriteLine(linea);
+
+                    if (!m.Key.Recorrida(timestamp))ImprimirGrafo(ejecucion, m.Key, timestamp, tab+10);
+                }
+            }
         }
     }
 }

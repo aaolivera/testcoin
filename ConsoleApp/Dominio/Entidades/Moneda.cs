@@ -27,10 +27,10 @@ namespace Dominio.Entidades
                
         public bool Comprar(Moneda monedaDestino, string ejecucion)
         {
-            if (Cantidad(ejecucion) == decimal.MaxValue) return false;
+            if (Cantidad(ejecucion) == Moneda.CantidadDefault) return false;
             var retorno = Convertir(monedaDestino, ejecucion, out List<Orden> ordenesDecompraNecesarias, out decimal cantidadOrigen, out decimal cantidadDestino);
             if (!retorno) return false;
-
+            //Console.WriteLine($"Intento con {this.Nombre}({Cantidad(ejecucion)}) comprar {monedaDestino.Nombre}({monedaDestino.Cantidad(ejecucion)}): {cantidadDestino} ");
             if (cantidadOrigen == Cantidad(ejecucion) && monedaDestino.Cantidad(ejecucion) > cantidadDestino)
             {
                 monedaDestino.SetCantidad(cantidadDestino, ejecucion);
