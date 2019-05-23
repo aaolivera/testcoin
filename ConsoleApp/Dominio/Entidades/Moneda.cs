@@ -31,7 +31,7 @@ namespace Dominio.Entidades
             var retorno = Convertir(monedaDestino, ejecucion, out List<Orden> ordenesDecompraNecesarias, out decimal cantidadOrigen, out decimal cantidadDestino);
             if (!retorno) return false;
             //Console.WriteLine($"Intento con {this.Nombre}({Cantidad(ejecucion)}) comprar {monedaDestino.Nombre}({monedaDestino.Cantidad(ejecucion)}): {cantidadDestino} ");
-            if (cantidadOrigen == Cantidad(ejecucion) && monedaDestino.Cantidad(ejecucion) > cantidadDestino)
+            if (cantidadOrigen == Cantidad(ejecucion) && monedaDestino.Cantidad(ejecucion) < cantidadDestino)
             {
                 monedaDestino.SetCantidad(cantidadDestino, ejecucion);
                 monedaDestino.SetOrdenesDeCompraMonedaAnterior(ordenesDecompraNecesarias, ejecucion);
@@ -56,11 +56,11 @@ namespace Dominio.Entidades
                 i++;
                 var copiaDeOrden = orden.Clonar();
                 var cantidadOrigenDeOrdenActual = 0M;
-                if (cantidadOrigen + copiaDeOrden.Cantidad > cantidadActual)
+                if (cantidadOrigen + copiaDeOrden.Cantidad < cantidadActual)
                 {
                     cantidadOrigenDeOrdenActual = copiaDeOrden.Cantidad;
                 }
-                else if (cantidadOrigen + copiaDeOrden.Cantidad < cantidadActual)
+                else if (cantidadOrigen + copiaDeOrden.Cantidad > cantidadActual)
                 {
                     cantidadOrigenDeOrdenActual = (cantidadActual - cantidadOrigen);
                     if (cantidadOrigenDeOrdenActual == 0) break;
@@ -82,6 +82,7 @@ namespace Dominio.Entidades
             if (!ordenesDecompraNecesarias.Any()) return false;
 
             cantidadDestino = cantidadDestino - (ordenesDecompraNecesarias.First().EsDeVenta ? 0.199600798M : 0.2M) / 100 * cantidadDestino;
+
             return true;
         }
         
@@ -117,7 +118,9 @@ namespace Dominio.Entidades
                 MonedaQueQuieroComprar = monedaAcomprar,
                 MonedaQueQuieroVender = this
             };
-            
+            ////////////////////////////////
+            if (ordenes.Any()) return;
+            ///////////////////////////////
             ordenes.AddSorted(ordenDeCompra);
         }
 
@@ -136,11 +139,6 @@ namespace Dominio.Entidades
             if (es.HasValue) GetAux(ejecucion).Recorrida = es.Value;
             return GetAux(ejecucion).Recorrida;
         }
-        public bool EnCola(string ejecucion, bool? es = null)
-        {
-            if (es.HasValue) GetAux(ejecucion).EnCola = es.Value;
-            return GetAux(ejecucion).EnCola;
-        }
 
         public void SetOrdenesDeCompraMonedaAnterior(List<Orden> ordenes, string ejecucion)
         {
@@ -155,19 +153,13 @@ namespace Dominio.Entidades
         public void SetCantidad(decimal cantidad, string ejecucion)
         {
             GetAux(ejecucion).Cantidad = cantidad;
-            GetAux(ejecucion).CantidadPositiva = cantidad * -1;
         }
 
         public decimal Cantidad(string ejecucion)
         {
             return GetAux(ejecucion).Cantidad;
         }
-
-        public decimal CantidadPositiva(string ejecucion)
-        {
-            return GetAux(ejecucion).CantidadPositiva;
-        }
-
+        
         private DijkstraAux GetAux(string ejecucion)
         {
             try

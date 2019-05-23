@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
@@ -18,32 +19,35 @@ namespace ConsoleApp
         static async Task Main(string[] args)
         {
             var providers = new List<IProvider> { new YobitProvider() };
-            var mercado = new Mercado(providers, new List<string> { "btcu" });
+            var mercado = new Mercado(providers, new List<string> { "btcu", "edc_ltc", "ltc_edc" });
             await mercado.ActualizarMonedas();
 
-
-            mercado.LimpiarOrdenes();
-            await mercado.ActualizarOrdenes();
-            
-            //BUSCAR
-            System.Console.WriteLine("Iniciar busqueda");
-            var monedaPilar = mercado.ObtenerMoneda("btc");
-            var inicial = 0.00010022M;
-            var resultado = new ConcurrentBag<Jugada>();
-
-            //ChequearMoneda(mercado, monedaPilar, inicial, mercado.Monedas.Where(c => c != monedaPilar).First());
-            //var tasks = new List<Task>();
-            foreach (var moneda in mercado.Monedas.Where(c => c != monedaPilar))
+            while (true)
             {
-                ChequearMoneda(mercado, monedaPilar, inicial, moneda);
-                //tasks.Add(ChequearMonedaAsync(mercado, monedaPilar, inicial, moneda));
+                mercado.LimpiarOrdenes();
+                await mercado.ActualizarOrdenes();
+
+                //BUSCAR
+                System.Console.WriteLine("Iniciar busqueda");
+                var monedaPilar = mercado.ObtenerMoneda("btc");
+                var inicial = 0.00010022M;
+                var resultado = new ConcurrentBag<Jugada>();
+
+                //ChequearMoneda(mercado, monedaPilar, inicial, mercado.Monedas.Where(c => c != monedaPilar).First());
+                //var tasks = new List<Task>();
+                foreach (var moneda in mercado.Monedas.Where(c => c != monedaPilar))
+                {
+                    if (ChequearMoneda(mercado, monedaPilar, inicial, moneda)) break;
+                    //tasks.Add(ChequearMonedaAsync(mercado, monedaPilar, inicial, moneda));
+                }
+
+                System.Console.WriteLine("Buscando...");
+                //await Task.WhenAll(tasks);
+                System.Console.WriteLine("Fin");
+                Console.Read();
+                //Thread.Sleep(30000);
             }
-
-            System.Console.WriteLine("Buscando...");
-            //await Task.WhenAll(tasks);
-            System.Console.WriteLine("Fin");
-
-            Console.ReadLine();
+            
         }
 
         private static async Task ChequearMonedaAsync(Mercado mercado, Moneda monedaPilar, decimal inicial, Moneda monedaDestino)
@@ -51,17 +55,17 @@ namespace ConsoleApp
             await Task.Run(() => ChequearMoneda(mercado, monedaPilar, inicial, monedaDestino));
         }
 
-        private static void ChequearMoneda(Mercado mercado, Moneda monedaPilar, decimal inicial, Moneda monedaDestino)
+        private static bool ChequearMoneda(Mercado mercado, Moneda monedaPilar, decimal inicial, Moneda monedaDestino)
         {
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             var movimientos = mercado.ObtenerOperacionOptima(monedaPilar, monedaDestino, inicial, out string ejecucionIda, out string ejecucionvuelta);
             if(movimientos.Any())
             {
-                Console.WriteLine("--//" + monedaPilar.Nombre + "-" + monedaDestino.Nombre + "//--");
+                //Console.WriteLine("--//" + monedaPilar.Nombre + "-" + monedaDestino.Nombre + "//--");
 
                 var monedaInicial = movimientos.First();
-                var cantidadDestino = monedaInicial.CantidadPositiva(ejecucionvuelta);
+                var cantidadDestino = monedaInicial.Cantidad(ejecucionvuelta);
 
                 if (monedaInicial.Nombre == monedaPilar.Nombre && cantidadDestino > inicial)
                 {
@@ -73,16 +77,16 @@ namespace ConsoleApp
                     foreach (var m in movimientos)
                     {
 
-                        texto += $"({m.Nombre}:{m.CantidadPositiva(ida ? ejecucionIda : ejecucionvuelta).ToString("F08", CultureInfo.InvariantCulture)})";
+                        texto += $"({m.Nombre}:{m.Cantidad(ida ? ejecucionIda : ejecucionvuelta).ToString("F08", CultureInfo.InvariantCulture)})";
                         if (m.Nombre == monedaDestino.Nombre && ida) ida = false;
                     }
                     Console.WriteLine(texto);
                     mercado.EjecutarMovimientos(movimientos, monedaDestino, ejecucionIda, ejecucionvuelta).Wait();
-                    //return true;
+                    return true;
                     //};
                 }
             }
-           
+            return false;
 
             //stopwatch.Stop();
             //Console.WriteLine($"ChequearMoneda {monedaDestino.Nombre} en " + stopwatch.ElapsedMilliseconds * 0.001M);
