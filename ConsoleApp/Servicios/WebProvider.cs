@@ -108,7 +108,7 @@ namespace Providers
 
                 Console.WriteLine($"Post {proxy}: Proxy {dinamic.Tiempo}, Consola: {it * 0.001M}, Procesado: {c * 0.001M} segs, {dinamic.Responses.Sum(x => x.Length)}");
             }
-            catch
+            catch(Exception e)
             {
                 Console.WriteLine($"Proxy {proxy} en error, encolando paginas fallidas y quitando de la lista");
                 Proxys.Remove(proxy);

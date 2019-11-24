@@ -8,9 +8,13 @@ namespace Dominio.Entidades
 {
     public class Jugada
     {
-        public List<Moneda> Movimientos { get; set; }
-        public Moneda MonedaDestino { get; set; }
-        public string EjecucionIda { get; set; }
-        public string EjecucionVuelta { get; set; }
+        public List<Movimiento> Movimientos { get; set; } = new List<Movimiento>();
+        public decimal Inicial { get; internal set; }
+        public decimal Final { get; internal set; }
+
+        public decimal Ganancia { get
+            {
+                return (Final * 100 / Inicial) - 100;
+            } }
     }
 }

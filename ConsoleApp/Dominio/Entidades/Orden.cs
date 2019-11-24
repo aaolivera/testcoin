@@ -11,6 +11,8 @@ namespace Dominio.Entidades
         public bool EsDeVenta { get; set; }
         public string Relacion { get; set; }
 
+
+
         public Orden Clonar()
         {
             return (Orden)this.Clone();

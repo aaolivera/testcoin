@@ -15,8 +15,9 @@ namespace Providers
     {
         private static readonly int cantidad = 1;
         private readonly string info = @"https://yobit.net/api/3/info";
-        private readonly string depth = @"https://yobit.net/api/3/depth/{0}?ignore_invalid=1&limit=" + cantidad;
+        //private readonly string depth = @"https://yobit.net/api/3/depth/{0}?ignore_invalid=1&limit=" + cantidad;
         private readonly string priv = @"https://yobit.net/tapi/";
+        private readonly string ticker = @"https://yobit.net/api/3/ticker/{0}?ignore_invalid=1";
 
         #region CARGA
         public async Task ActualizarMonedas(IMercadoCargar mercado, List<string> exclude, List<string> include)
@@ -24,17 +25,28 @@ namespace Providers
             await WebProvider.DownloadPages(new List<string> { info }, x => CargarMonedas(x, mercado, exclude, include));
         }
 
-        public async Task ActualizarOrdenes(IMercadoCargar mercado)
+        //public async Task ActualizarOrdenes(IMercadoCargar mercado)
+        //{
+        //    await Descargar(mercado, ticker, x => CargarPaginaDeOrdenes(x, mercado));
+        //}
+
+        public async Task ActualizarRelaciones(IMercadoCargar mercado)
+        {
+            await Descargar(mercado, ticker, x => CargarPaginaDeRelaciones(x, mercado));
+        }
+
+        private async Task Descargar(IMercadoCargar mercado, string url, Action<dynamic> callBack)
         {
             var page = string.Empty;
-            
+
             //Armo Urls de paginas
-            var paginas = new List<string>();
-            foreach(var i in mercado.RelacionesEntreMonedas)
+            var paginasticker = new List<string>();
+            for (int i1 = 0; i1 < mercado.RelacionesEntreMonedas.Count; i1++)
             {
-                if (page.Length + i.Length > 510)
+                string i = mercado.RelacionesEntreMonedas[i1];
+                if (i1 % 20 == 0 && i1 > 0)
                 {
-                    paginas.Add(string.Format(depth, page));
+                    paginasticker.Add(string.Format(url, page));
                     page = i;
                 }
                 else if (page.Length == 0)
@@ -44,18 +56,19 @@ namespace Providers
                 else
                 {
                     page += "-" + i;
-                }                
+                }
             }
             if (!string.IsNullOrEmpty(page))
             {
-                paginas.Add(string.Format(depth, page));
+                paginasticker.Add(string.Format(url, page));
             }
-            
+
             //Obtengo y cargo       
-            await WebProvider.DownloadPages(paginas.ToList(), x => CargarPaginaDeOrdenes(x, mercado));
+            await WebProvider.DownloadPages(paginasticker.ToList(), callBack);
         }
 
-        private void CargarPaginaDeOrdenes(IEnumerable<string> responses, IMercadoCargar mercado)
+
+        private void CargarPaginaDeRelaciones(IEnumerable<string> responses, IMercadoCargar mercado)
         {
             try
             {
@@ -67,26 +80,13 @@ namespace Providers
                         dynamic ordenesPorMoneda = relacion;
 
                         var monedas = ordenesPorMoneda.Name.Split('_');
-                        var ventas = ordenesPorMoneda.Value["asks"];
-                        var compras = ordenesPorMoneda.Value["bids"];
-                        if (ventas != null)
-                        {
-                            var i = 0;
-                            foreach (var ordenVenta in ventas)
-                            {
-                                mercado.AgregarOrdenDeVenta(monedas[0], monedas[1], (decimal)ordenVenta[0].Value, (decimal)ordenVenta[1].Value);
-                            }
-                        }
+                        var avg = ordenesPorMoneda.Value["avg"];
+                        var vol = ordenesPorMoneda.Value["vol"];
+                        var buy = ordenesPorMoneda.Value["buy"];
+                        var sell = ordenesPorMoneda.Value["sell"];
 
-                        if (compras != null)
-                        {
-                            var j = 0;
+                        mercado.CargarRelacionEntreMonedas(monedas[0], monedas[1], (decimal)vol, (decimal)buy, (decimal)sell);
 
-                            foreach (var ordenCompra in compras)
-                            {
-                                mercado.AgregarOrdenDeCompra(monedas[0], monedas[1], (decimal)ordenCompra[0].Value, (decimal)ordenCompra[1].Value);
-                            }
-                        }
                     }
                 }
             }
@@ -97,6 +97,50 @@ namespace Providers
             }
             
         }
+
+        //private void CargarPaginaDeOrdenes(IEnumerable<string> responses, IMercadoCargar mercado)
+        //{
+        //    try
+        //    {
+        //        foreach (string response in responses)
+        //        {
+        //            dynamic relaciones = JsonConvert.DeserializeObject<dynamic>(response);
+        //            foreach (dynamic relacion in relaciones)
+        //            {
+        //                dynamic ordenesPorMoneda = relacion;
+
+        //                var monedas = ordenesPorMoneda.Name.Split('_');
+        //                var ventas = ordenesPorMoneda.Value["asks"];
+        //                var compras = ordenesPorMoneda.Value["bids"];
+        //                if (ventas != null)
+        //                {
+        //                    var i = 0;
+        //                    foreach (var ordenVenta in ventas)
+        //                    {
+        //                        mercado.AgregarOrdenDeVenta(monedas[0], monedas[1], (decimal)ordenVenta[0].Value, (decimal)ordenVenta[1].Value);
+        //                    }
+        //                }
+
+        //                if (compras != null)
+        //                {
+        //                    var j = 0;
+
+        //                    foreach (var ordenCompra in compras)
+        //                    {
+        //                        mercado.AgregarOrdenDeCompra(monedas[0], monedas[1], (decimal)ordenCompra[0].Value, (decimal)ordenCompra[1].Value);
+        //                    }
+        //                }
+        //            }
+        //        }
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        Console.WriteLine("Error al mapear response CargarPaginaDeOrdenes");
+        //        throw;
+        //    }
+
+        //}
+
         #endregion
 
 
@@ -147,7 +191,7 @@ namespace Providers
                     if ((exclude == null || (!exclude.Contains(monedas[0]) && !exclude.Contains(monedas[1]) && !exclude.Contains(relacion.Name))) 
                         && (include == null || (include.Contains(monedas[0]) || include.Contains(monedas[1]) || include.Contains(relacion.Name))))
                     {
-                        mercado.AgregarRelacionEntreMonedas(monedas[0], monedas[1]);
+                        mercado.CargarRelacionEntreMonedas(monedas[0], monedas[1], 0, 0,0);
                     }
                 }
             }

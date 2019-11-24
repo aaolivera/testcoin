@@ -30,7 +30,7 @@ namespace Web.Controllers
         public async Task<JsonResult> ActualizarOrdenes()
         {
             var stopwatch = Stopwatch.StartNew();
-            await mercado.ActualizarOrdenes();
+            await mercado.ActualizarRelaciones();
             return Json(new { Mensaje = $"Tiempo: {stopwatch.ElapsedMilliseconds * 0.001M}" }, JsonRequestBehavior.AllowGet);
         }
 

@@ -7,6 +7,7 @@ namespace Dominio.Interfaces
     public interface IMercado
     {
         Task ActualizarMonedas();
-        Task ActualizarOrdenes();
+        //Task ActualizarOrdenes();
+        Task ActualizarRelaciones();
     }
 }
