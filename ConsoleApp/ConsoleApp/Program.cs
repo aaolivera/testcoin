@@ -26,7 +26,7 @@ namespace ConsoleApp
                     Console.WriteLine($"{r.Inicial} -> {r.Final} = Ganancia {r.Ganancia}");
                     foreach(var m in r.Movimientos)
                     {
-                        Console.WriteLine($"------{m.Origen.Nombre} ({m.CantidadOrigen})-> {m.Destino.Nombre}({m.CantidadDestino}), precio {m.Precio}");
+                        Console.WriteLine(m.ToString());
                     }
                 }
                 System.Console.WriteLine("Fin");

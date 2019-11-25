@@ -2,7 +2,7 @@
 
 namespace Dominio.Entidades
 {
-    public class Orden : IComparable<Orden>, ICloneable
+    public class Orden : IComparable<Orden>
     {
         public Moneda MonedaQueQuieroVender { get; set; }
         public Moneda MonedaQueQuieroComprar { get; set; }
@@ -10,18 +10,6 @@ namespace Dominio.Entidades
         public decimal PrecioUnitario { get; set; }
         public bool EsDeVenta { get; set; }
         public string Relacion { get; set; }
-
-
-
-        public Orden Clonar()
-        {
-            return (Orden)this.Clone();
-        }
-
-        public object Clone()
-        {
-            return this.MemberwiseClone();
-        }
 
         public int CompareTo(Orden other)
         {

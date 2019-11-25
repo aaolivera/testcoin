@@ -27,7 +27,7 @@ namespace Dominio.Entidades
 
         public decimal VolumenEnBtc { 
             get {
-                return Mercado.Convertir(MonedaA, Mercado.ObtenerMoneda("btc"), Volumen, new Jugada());
+                return Mercado.Convertir(MonedaB, Mercado.ObtenerMoneda("btc"), Volumen, new Jugada());
             }
         }
 
@@ -45,6 +45,9 @@ namespace Dominio.Entidades
             }
         }
 
-
+        public override string ToString()
+        {
+            return $"{MonedaA.Nombre.ToUpper()}/{MonedaB.Nombre.ToUpper()}";
+        }
     }
 }

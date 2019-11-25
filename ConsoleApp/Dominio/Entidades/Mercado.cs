@@ -79,20 +79,22 @@ namespace Dominio.Entidades
             if (relacion.MonedaA == origen)
             {
                 cantidadDestino = cantidadOrigen * relacion.Precio;
-                cantidadDestino -= 0.199600798M / 100 * cantidadDestino;
+                cantidadDestino -= 0.2M / 100 * cantidadDestino;
                 jugada.Movimientos.Add(new Movimiento 
                 { 
                     Origen = origen, 
                     Destino = destino, 
                     Precio = relacion.Precio,
                     CantidadOrigen = cantidadOrigen,
-                    CantidadDestino = cantidadDestino
+                    CantidadDestino = cantidadDestino,
+                    Relacion = relacion,
+                    Compra = false
                 });
 
             }
             if (relacion.MonedaB == origen)
             {
-                cantidadOrigen -= 0.2M / 100 * cantidadOrigen;
+                cantidadOrigen -= 0.199600798M / 100 * cantidadOrigen;
                 cantidadDestino = cantidadOrigen / relacion.Precio;
                 jugada.Movimientos.Add(new Movimiento 
                 { 
@@ -100,7 +102,9 @@ namespace Dominio.Entidades
                     Destino = destino, 
                     Precio = relacion.Precio,
                     CantidadOrigen = cantidadOrigen,
-                    CantidadDestino = cantidadDestino
+                    CantidadDestino = cantidadDestino,
+                    Relacion = relacion,
+                    Compra = true
                 });
             }
             return cantidadDestino;
@@ -117,14 +121,14 @@ namespace Dominio.Entidades
             return resultado;
         }
 
-        public List<KeyValuePair<string, Relacion>> ListarRelacionesConAltoSpreed()
+        public List<KeyValuePair<string, Relacion>> ListarRelacionesConVolumen()
         {
-            return RelacionesEntreMonedasHash.Where(x => x.Value.VolumenEnBtc > 1).ToList();
+            return RelacionesEntreMonedasHash.Where(x => x.Value.VolumenEnBtc > 0.05m).ToList();
         }
 
         public List<Jugada> ListarJugadas(decimal cantidadBtc)
         {
-            return ListarRelacionesConAltoSpreed().Select(x => CalcularJugada(x.Value, cantidadBtc)).OrderByDescending(x => x.Ganancia).Where(x => x.Ganancia > 10).ToList();
+            return ListarRelacionesConVolumen().Select(x => CalcularJugada(x.Value, cantidadBtc)).Where(x => x.Ganancia > 10).OrderByDescending(x => x.Ganancia).Take(10).ToList();
         }
     }
 }
