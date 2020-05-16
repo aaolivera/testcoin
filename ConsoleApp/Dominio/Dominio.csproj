@@ -31,6 +31,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -42,22 +43,21 @@
   <ItemGroup>
     <Compile Include="Dtos\ProxyResult.cs" />
     <Compile Include="Entidades\Movimiento.cs" />
+    <Compile Include="Entidades\Nonce.cs" />
+    <Compile Include="Entidades\PrecioHistorico.cs" />
     <Compile Include="Entidades\Relacion.cs" />
     <Compile Include="Entidades\Jugada.cs" />
-    <Compile Include="Entidades\Mercado.cs" />
     <Compile Include="Entidades\Orden.cs" />
-    <Compile Include="Entidades\Moneda.cs" />
     <Compile Include="Helper\HttpClientApp.cs" />
     <Compile Include="Helper\IComparableE.cs" />
     <Compile Include="Helper\NavigationList.cs" />
     <Compile Include="Helper\PriorityQueue.cs" />
     <Compile Include="Helper\StringExt.cs" />
     <Compile Include="Helper\ListExt.cs" />
-    <Compile Include="Interfaces\IMercado.cs" />
-    <Compile Include="Interfaces\IMercadoCargar.cs" />
-    <Compile Include="Interfaces\IProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Interfaces\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

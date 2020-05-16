@@ -1,53 +1,50 @@
-﻿using Dominio.Interfaces;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Dominio.Entidades
 {
     public class Relacion
     {
-        public Relacion(Moneda monedaA, Moneda monedaB, decimal volumen, decimal compra, decimal venta, Mercado mercado)
-        {
-            MonedaA = monedaA;
-            MonedaB = monedaB;
-            Volumen = volumen;
-            Compra = compra;
-            Venta = venta;
-            Mercado = mercado;
-        }
-        public decimal Volumen { get; private set; }
-        public decimal Compra { get; private set; }
-        public decimal Venta { get; private set; }
-        public Mercado Mercado { get; private set; }
-        public Moneda MonedaA { get; private set; }
-        public Moneda MonedaB { get; private set; }
+        [InverseProperty("Relacion")]
+        public ICollection<PrecioHistorico> PrecioHistoricos { get; set; }
 
-        public decimal VolumenEnBtc { 
-            get {
-                return Mercado.Convertir(MonedaB, Mercado.ObtenerMoneda("btc"), Volumen, new Jugada());
-            }
-        }
+        [Key]
+        public string MonedaA { get; set; }
+        [Key]
+        public string MonedaB { get; set; }
 
+
+
+        [NotMapped]
+        public decimal Volumen { get { return PrecioHistoricos == null || !PrecioHistoricos.Any() ? 0 : PrecioHistoricos.Last().Volumen; } }
+        [NotMapped]
+        public decimal Compra { get { return PrecioHistoricos == null || !PrecioHistoricos.Any() ? 0 : PrecioHistoricos.Last().Compra; } }
+        [NotMapped]
+        public decimal Venta { get { return PrecioHistoricos == null || !PrecioHistoricos.Any() ? 0 : PrecioHistoricos.Last().Venta; } }
+        [NotMapped]
         public decimal Spread {
             get {
                 return Venta > 0 ? (Venta - Compra) * 100 / Venta : 0;
             }
         }
-
+        [NotMapped]
         public decimal Precio
         {
             get
             {
-                return (Compra + Venta) / 2;
+                var p = (Compra + Venta) / 2;
+                return p < 0.00000001M ? 0.00000001M : p - p % 0.00000001M;
             }
         }
-
+        public bool Contiene(string moneda)
+        {
+            return moneda == MonedaA || moneda == MonedaB;
+        }
         public override string ToString()
         {
-            return $"{MonedaA.Nombre.ToUpper()}/{MonedaB.Nombre.ToUpper()}";
+            return $"{MonedaA.ToUpper()}/{MonedaB.ToUpper()}";
         }
     }
 }

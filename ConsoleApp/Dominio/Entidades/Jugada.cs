@@ -1,20 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Dominio.Entidades
 {
     public class Jugada
     {
-        public List<Movimiento> Movimientos { get; set; } = new List<Movimiento>();
-        public decimal Inicial { get; internal set; }
-        public decimal Final { get; internal set; }
+        [Key]
+        public string MonedaA { get; set; }
+        [Key]
+        public string MonedaB { get; set; }
+
+        [InverseProperty("Jugada")]
+        public ICollection<Movimiento> Movimientos { get; set; } = new List<Movimiento>();
+        public decimal Inicial { get; set; }
+        public decimal Final { get; set; }
 
         public decimal Ganancia { get
             {
                 return (Final * 100 / Inicial) - 100;
             } }
+
+        public void Actualizar(Jugada j)
+        {
+            Inicial = j.Inicial;
+            Final = j.Final;
+        }
     }
 }

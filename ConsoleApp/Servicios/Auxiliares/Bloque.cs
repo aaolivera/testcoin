@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Providers
+namespace Servicios.Auxiliares
 {
     class Bloque
     {

@@ -215,9 +215,9 @@
       <Project>{805C2F55-D16E-4963-AE80-A0ED4C43ADD4}</Project>
       <Name>Dominio</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Servicios\Providers.csproj">
-      <Project>{AFDB065C-EEAF-48C9-9B1D-7DC6CD082DD7}</Project>
-      <Name>Providers</Name>
+    <ProjectReference Include="..\Servicios\Servicios.csproj">
+      <Project>{6ec151ba-f8c6-405c-82bf-507feb675f6f}</Project>
+      <Name>Servicios</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>

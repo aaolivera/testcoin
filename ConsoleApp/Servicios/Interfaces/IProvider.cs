@@ -1,8 +1,9 @@
 ﻿using Dominio.Entidades;
+using Dominio.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Dominio.Interfaces
+namespace Servicios.Interfaces
 {
     public interface IProvider
     {
@@ -11,7 +12,7 @@ namespace Dominio.Interfaces
         Task ActualizarRelaciones(IMercadoCargar mercado);
 
 
-        Task EjecutarOrden(Orden i);
+        //Task EjecutarOrden(Orden i);
         Task<decimal> ConsultarSaldo(string moneda);
         Task<bool> HayOrdenesActivas(string relacion);
     }
