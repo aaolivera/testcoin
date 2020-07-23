@@ -8,12 +8,12 @@ namespace Dominio.Entidades
     public class Relacion
     {
         [InverseProperty("Relacion")]
-        public ICollection<PrecioHistorico> PrecioHistoricos { get; set; }
+        public virtual ICollection<PrecioHistorico> PrecioHistoricos { get; set; }
 
-        [Key]
-        public string MonedaA { get; set; }
-        [Key]
-        public string MonedaB { get; set; }
+        [Key, Column(Order = 0)]
+        public virtual string MonedaA { get; set; }
+        [Key, Column(Order = 1)]
+        public virtual string MonedaB { get; set; }
 
 
 

@@ -47,7 +47,6 @@
     <Compile Include="Entidades\PrecioHistorico.cs" />
     <Compile Include="Entidades\Relacion.cs" />
     <Compile Include="Entidades\Jugada.cs" />
-    <Compile Include="Entidades\Orden.cs" />
     <Compile Include="Helper\HttpClientApp.cs" />
     <Compile Include="Helper\IComparableE.cs" />
     <Compile Include="Helper\NavigationList.cs" />

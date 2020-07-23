@@ -7,15 +7,15 @@ namespace Dominio.Entidades
 {
     public class Jugada
     {
-        [Key]
-        public string MonedaA { get; set; }
-        [Key]
-        public string MonedaB { get; set; }
+        [Key, Column(Order = 0)]
+        public virtual string MonedaA { get; set; }
+        [Key, Column(Order = 1)]
+        public virtual string MonedaB { get; set; }
 
         [InverseProperty("Jugada")]
-        public ICollection<Movimiento> Movimientos { get; set; } = new List<Movimiento>();
-        public decimal Inicial { get; set; }
-        public decimal Final { get; set; }
+        public virtual ICollection<Movimiento> Movimientos { get; set; } = new List<Movimiento>();
+        public virtual decimal Inicial { get; set; }
+        public virtual decimal Final { get; set; }
 
         public decimal Ganancia { get
             {

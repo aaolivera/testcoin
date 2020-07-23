@@ -81,15 +81,18 @@ namespace Servicios.Impl
                         var vol = ordenesPorMoneda.Value["vol"];
                         var buy = ordenesPorMoneda.Value["buy"];
                         var sell = ordenesPorMoneda.Value["sell"];
+                        if ((decimal)vol > 0)
+                        {
+                            mercado.CargarPrecio(monedas[0], monedas[1], (decimal)vol, (decimal)buy, (decimal)sell);
+                        }
 
-                        mercado.CargarPrecio(monedas[0], monedas[1], (decimal)vol, (decimal)buy, (decimal)sell);
 
                     }
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine("Error al mapear response CargarPaginaDeOrdenes");
+                System.Diagnostics.Debug.WriteLine("Error al mapear response CargarPaginaDeOrdenes");
                 throw;
             }
             
@@ -127,7 +130,7 @@ namespace Servicios.Impl
         //    {
         //        body = $"method=Trade&pair={i.Relacion}&type=sell&rate={i.PrecioUnitario.ToString("0.########", CultureInfo.InvariantCulture)}&amount={i.Cantidad.ToString("0.########", CultureInfo.InvariantCulture)}&nonce={{0}}";
         //    }
-        //    System.Console.WriteLine(body);
+        //    System.System.Diagnostics.Debug.WriteLine(body);
         //    var respuesta = await PostPage(priv, body);
         //}
 
@@ -149,7 +152,7 @@ namespace Servicios.Impl
             }
             catch
             {
-                Console.WriteLine("Error al mapear response CargarMonedas");
+                System.Diagnostics.Debug.WriteLine("Error al mapear response CargarMonedas");
             }
         }
         

@@ -16,6 +16,7 @@ namespace Repositorio
 
         public RepositorioEF(DbContext context)
         {
+            var ensureDLLIsCopied = System.Data.Entity.SqlServer.SqlProviderServices.Instance;
             this.context = context;
         }
 

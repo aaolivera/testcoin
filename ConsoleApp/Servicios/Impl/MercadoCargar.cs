@@ -14,16 +14,17 @@ namespace Servicios.Impl
         private List<IProvider> Providers { get; }
         private List<string> MonedasExcluidas { get; }
         private List<string> MonedasIncluidas { get; }
-        private Dictionary<string, Relacion> RelacionesEntreMonedasHash { get; } = new Dictionary<string, Relacion>();
+        public Dictionary<string, Relacion> RelacionesEntreMonedasHash { get; } = new Dictionary<string, Relacion>();
 
         public List<string> RelacionesEntreMonedas => RelacionesEntreMonedasHash.Keys.ToList();
-        public IRepositorio Repositorio => new RepositorioEF(new DDbContext());
+        public IRepositorio Repositorio;
 
-        public MercadoCargar(List<IProvider> providers, List<string> excluidas = null, List<string> incluidas = null)
+        public MercadoCargar(List<IProvider> providers, IRepositorio repositorio, List<string> excluidas = null, List<string> incluidas = null)
         {
             Providers = new List<IProvider>(providers);
             MonedasExcluidas = excluidas;
             MonedasIncluidas = incluidas;
+            Repositorio = repositorio;
             var relaciones = Repositorio.Listar<Relacion>(x => true);
             RelacionesEntreMonedasHash = relaciones.ToDictionary(x => x.MonedaA + "_" + x.MonedaB, x => x);
         }
@@ -44,15 +45,6 @@ namespace Servicios.Impl
             }
         }
 
-        public void CargarRelacionEntreMonedas(string monedaNameA, string monedaNameB)
-        {
-            if(!RelacionesEntreMonedasHash.ContainsKey(monedaNameA + "_" + monedaNameB))
-            {
-                var relacion = Repositorio.Agregar(new Relacion { MonedaA = monedaNameA, MonedaB = monedaNameB });
-                RelacionesEntreMonedasHash[monedaNameA + "_" + monedaNameB] = relacion;
-            }
-        }
-
         public void CargarPrecio(string monedaNameA, string monedaNameB, decimal volumen, decimal compra, decimal venta)
         {
             CargarRelacionEntreMonedas(monedaNameA, monedaNameB);
@@ -65,6 +57,14 @@ namespace Servicios.Impl
                 Relacion = r,
                 Fecha = DateTime.Now
             });
+        }
+        public void CargarRelacionEntreMonedas(string monedaNameA, string monedaNameB)
+        {
+            if (!RelacionesEntreMonedasHash.ContainsKey(monedaNameA + "_" + monedaNameB))
+            {
+                var relacion = Repositorio.Agregar(new Relacion { MonedaA = monedaNameA, MonedaB = monedaNameB });
+                RelacionesEntreMonedasHash[monedaNameA + "_" + monedaNameB] = relacion;
+            }
         }
     }
 }

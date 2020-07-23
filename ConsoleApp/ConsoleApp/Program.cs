@@ -20,13 +20,13 @@ namespace ConsoleApp
             //    //BUSCAR
             //    foreach (var r in mercado.ListarJugadas(0.001m))
             //    {
-            //        Console.WriteLine($"{r.Inicial} -> {r.Final} = Ganancia {r.Ganancia}");
+            //        System.Diagnostics.Debug.WriteLine($"{r.Inicial} -> {r.Final} = Ganancia {r.Ganancia}");
             //        foreach(var m in r.Movimientos)
             //        {
-            //            Console.WriteLine(m.ToString());
+            //            System.Diagnostics.Debug.WriteLine(m.ToString());
             //        }
             //    }
-            //    System.Console.WriteLine("Fin");
+            //    System.System.Diagnostics.Debug.WriteLine("Fin");
             //    Console.Read();
             //    //Thread.Sleep(30000);
             //}

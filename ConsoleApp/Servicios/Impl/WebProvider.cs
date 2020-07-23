@@ -53,39 +53,39 @@ namespace Servicios.Impl
         public static async Task DownloadPages(List<string> urls, Action<dynamic> callBack)
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
-            Console.WriteLine("---------------------------------------------------------------");
-            Console.WriteLine($"Iniciando descarga {urls.Count}");
+            System.Diagnostics.Debug.WriteLine("---------------------------------------------------------------");
+            System.Diagnostics.Debug.WriteLine($"Iniciando descarga {urls.Count}");
             if (Proxys.Count == 0)
             {
-                Console.WriteLine($"Nn hay Proxys disponibles");
+                System.Diagnostics.Debug.WriteLine($"Nn hay Proxys disponibles");
                 return;
             }
             var retorno = new List<dynamic>();
             var tasks = new List<Task<Bloque>>();
             var client = new HttpClientApp();
             var bloquesDeUrls = urls.Split(Proxys.Count).ToArray();
-            Console.WriteLine($"Bloques listos {bloquesDeUrls.Count()} en {stopwatch.ElapsedMilliseconds * 0.001M}");
+            System.Diagnostics.Debug.WriteLine($"Bloques listos {bloquesDeUrls.Count()} en {stopwatch.ElapsedMilliseconds * 0.001M}");
 
             for (var i = 0; i < Proxys.Count && i < bloquesDeUrls.Count(); i++)
             {
                 tasks.Add(DownloadPagesAsync(bloquesDeUrls[i].ToList(), Proxys[i], callBack, client));
             }
-            Console.WriteLine($"Taks Instanciados en {stopwatch.ElapsedMilliseconds * 0.001M}");
+            System.Diagnostics.Debug.WriteLine($"Taks Instanciados en {stopwatch.ElapsedMilliseconds * 0.001M}");
 
             var bloques = await Task.WhenAll(tasks);
-            Console.WriteLine($"Taks Terminados en {stopwatch.ElapsedMilliseconds * 0.001M}");
+            System.Diagnostics.Debug.WriteLine($"Taks Terminados en {stopwatch.ElapsedMilliseconds * 0.001M}");
 
             var descargasFallidas = bloques.Where(x => x.PaginasFallidas.Any());
             if (descargasFallidas.Any())
             {
                 var paginas = bloques.SelectMany(x => x.PaginasFallidas).ToList();
                 
-                Console.WriteLine($"Existen {paginas.Count} paginas fallidas, reprocesandolas");
+                System.Diagnostics.Debug.WriteLine($"Existen {paginas.Count} paginas fallidas, reprocesandolas");
                 await DownloadPages(paginas, callBack);
             }
             stopwatch.Stop();
-            Console.WriteLine("Descarga Completa en " + stopwatch.ElapsedMilliseconds * 0.001M);
-            Console.WriteLine("---------------------------------------------------------------");
+            System.Diagnostics.Debug.WriteLine("Descarga Completa en " + stopwatch.ElapsedMilliseconds * 0.001M);
+            System.Diagnostics.Debug.WriteLine("---------------------------------------------------------------");
         }
         
         private static async Task<Bloque> DownloadPagesAsync(List<string> urls, string proxy, Action<dynamic> callBack, HttpClientApp client)
@@ -106,11 +106,11 @@ namespace Servicios.Impl
                 callBack?.Invoke(dinamic.Responses.Select(v => Encoding.UTF8.GetString(v)));
                 c = stopwatch.ElapsedMilliseconds - c;
 
-                Console.WriteLine($"Post {proxy}: Proxy {dinamic.Tiempo}, Consola: {it * 0.001M}, Procesado: {c * 0.001M} segs, {dinamic.Responses.Sum(x => x.Length)}");
+                System.Diagnostics.Debug.WriteLine($"Post {proxy}: Proxy {dinamic.Tiempo}, Consola: {it * 0.001M}, Procesado: {c * 0.001M} segs, {dinamic.Responses.Sum(x => x.Length)}");
             }
             catch(Exception e)
             {
-                Console.WriteLine($"Proxy {proxy} en error, encolando paginas fallidas y quitando de la lista");
+                System.Diagnostics.Debug.WriteLine($"Proxy {proxy} en error, encolando paginas fallidas y quitando de la lista");
                 Proxys.Remove(proxy);
                 retorno.PaginasFallidas = urls;
             }

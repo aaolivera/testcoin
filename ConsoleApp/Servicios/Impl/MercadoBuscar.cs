@@ -13,17 +13,22 @@ namespace Servicios.Impl
         private const decimal CANTIDADBTC = 0.001m;
         private const decimal VOLUMENMINIMO = 0.01m;
         private Dictionary<string, Relacion> RelacionesEntreMonedasHash { get; } = new Dictionary<string, Relacion>();
-        public IRepositorio Repositorio => new RepositorioEF(new DDbContext());
+        public IRepositorio Repositorio;
 
-        public MercadoBuscar()
+        public MercadoBuscar(IRepositorio repositorio)
         {
+            Repositorio = repositorio;
             var relaciones = Repositorio.Listar<Relacion>(x => true);
             RelacionesEntreMonedasHash = relaciones.ToDictionary(x => x.MonedaA + "_" + x.MonedaB, x => x);
         }
 
         private decimal Convertir(string origen, string destino, decimal cantidadOrigen, Jugada jugada)
         {
-            var relacion = RelacionesEntreMonedasHash[origen + "-" + destino] ?? RelacionesEntreMonedasHash[destino + "-" + origen];
+            RelacionesEntreMonedasHash.TryGetValue(origen + "_" + destino, out Relacion relacion);
+            if(relacion == null)
+            {
+                RelacionesEntreMonedasHash.TryGetValue(destino + "_" + origen, out relacion);
+            }
 
             if (relacion == null) return 0;
             var cantidadDestino = 0M;
@@ -39,7 +44,8 @@ namespace Servicios.Impl
                     CantidadOrigen = cantidadOrigen,
                     CantidadDestino = cantidadDestino,
                     Relacion = relacion,
-                    Compra = false
+                    Compra = false,
+                    Jugada = jugada
                 });
 
             }
@@ -55,7 +61,8 @@ namespace Servicios.Impl
                     CantidadOrigen = cantidadOrigenTemp,
                     CantidadDestino = cantidadDestino,
                     Relacion = relacion,
-                    Compra = true
+                    Compra = true,
+                    Jugada = jugada
                 });
             }
             return cantidadDestino;
@@ -96,23 +103,19 @@ namespace Servicios.Impl
                 if(jdb != null)
                 {
                     jdb.Actualizar(j);
+                    foreach (var m in j.Movimientos)
+                    {
+                        m.Jugada = jdb;
+                        var mdb = Repositorio.Obtener<Movimiento>(x => x.Origen == m.Origen && x.Destino == m.Destino);
+                        if (mdb != null)
+                        {
+                            mdb.Actualizar(m);
+                        }
+                    }
                 }
                 else
                 {
                     jdb = Repositorio.Agregar(j);
-                }
-                foreach(var m in j.Movimientos)
-                {
-                    m.Jugada = jdb;
-                    var mdb = Repositorio.Obtener<Movimiento>(x => x.Origen == m.Origen && x.Destino == m.Destino);
-                    if(mdb != null)
-                    {
-                        mdb.Actualizar(m);
-                    }
-                    else
-                    {
-                        Repositorio.Agregar(m);
-                    }
                 }
             }
             Repositorio.GuardarCambios();

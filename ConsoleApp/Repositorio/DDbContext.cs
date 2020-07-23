@@ -20,7 +20,7 @@ namespace Repositorio
             //Database.SetInitializer(new DropCreateDatabaseAlways<SaludDbContext>());
 
             // Crear la base de datos si no existe.
-            //Database.SetInitializer(new CreateDatabaseIfNotExists<SaludDbContext>());
+            Database.SetInitializer(new CreateDatabaseIfNotExists<DDbContext>());
 
             // Eliminar y Crear nuevamente la base de datos al 
             // detectar cambios en el modelo. 
@@ -32,7 +32,8 @@ namespace Repositorio
             // No usamos nombres de tablas en plural. Igualmente la pluralización fucniona solo con nombres en ingles.
             modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
             modelBuilder.Conventions.Remove<OneToManyCascadeDeleteConvention>();
-
+            modelBuilder.Properties<DateTime>().Configure(c => c.HasColumnType("datetime2"));
+            modelBuilder.Properties<decimal>().Configure(config => config.HasPrecision(18, 8));
             //Se mapean todas las entidades bajo el namespace Molinos.Scato.Dominio.Entidades      
             MapearAssemblyDe<Nonce>(modelBuilder, x => x.Namespace == typeof(Nonce).Namespace, excluir: null);
         }

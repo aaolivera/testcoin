@@ -1,4 +1,5 @@
 ﻿
+using Dominio.Entidades;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -8,5 +9,6 @@ namespace Dominio.Interfaces
     {
         Task ActualizarMonedas();
         Task ActualizarRelaciones();
+        Dictionary<string, Relacion> RelacionesEntreMonedasHash { get; }
     }
 }

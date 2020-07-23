@@ -1,4 +1,5 @@
 ﻿using Dominio.Interfaces;
+using Repositorio;
 using Servicios.Impl;
 using Servicios.Interfaces;
 using System;
@@ -13,13 +14,15 @@ namespace WebApplication.Controllers
 {
     public class HomeController : Controller
     {
+        private RepositorioEF repositorio;
         static IMercadoActualizar mercadoActualizar = null;
         static IMercadoBuscar mercadoBuscar = null;
 
         public HomeController()
         {
-            mercadoActualizar = new MercadoCargar(new List<IProvider> { new YobitProvider() });
-            mercadoBuscar = new MercadoBuscar();
+            repositorio = new RepositorioEF(new DDbContext());
+            mercadoActualizar = new MercadoCargar(new List<IProvider> { new YobitProvider() }, repositorio);
+            mercadoBuscar = new MercadoBuscar(repositorio);
 
         }
 
@@ -27,13 +30,15 @@ namespace WebApplication.Controllers
         {
             var stopwatch = Stopwatch.StartNew();
             await mercadoActualizar.ActualizarMonedas();
-            return Json(new { Mensaje = $"Tiempo: {stopwatch.ElapsedMilliseconds * 0.001M}, Monedas: {0}" }, JsonRequestBehavior.AllowGet);
+            repositorio.GuardarCambios();
+            return Json(new { Mensaje = $"Tiempo: {stopwatch.ElapsedMilliseconds * 0.001M}, Monedas: {string.Join(",",mercadoActualizar.RelacionesEntreMonedasHash.Keys)}" }, JsonRequestBehavior.AllowGet);
         }
 
         public async Task<JsonResult> ActualizarRelaciones()
         {
             var stopwatch = Stopwatch.StartNew();
             await mercadoActualizar.ActualizarRelaciones();
+            repositorio.GuardarCambios();
             return Json(new { Mensaje = $"Tiempo: {stopwatch.ElapsedMilliseconds * 0.001M}" }, JsonRequestBehavior.AllowGet);
         }
 
@@ -41,6 +46,7 @@ namespace WebApplication.Controllers
         {
             var stopwatch = Stopwatch.StartNew();
             mercadoBuscar.CalcularJugadas();
+            repositorio.GuardarCambios();
             return Json(new { Mensaje = $"Tiempo: {stopwatch.ElapsedMilliseconds * 0.001M}" }, JsonRequestBehavior.AllowGet);
         }
 
