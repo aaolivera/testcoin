@@ -10,8 +10,8 @@ namespace Servicios.Impl
 {
     public class MercadoBuscar : IMercadoBuscar
     {
-        private const decimal CANTIDADBTC = 0.001m;
-        private const decimal VOLUMENMINIMO = 0.01m;
+        private const decimal CANTIDADBTC = 0.0001m;
+        private const decimal VOLUMENMINIMO = 0.001m;
         private Dictionary<string, Relacion> RelacionesEntreMonedasHash { get; } = new Dictionary<string, Relacion>();
         public IRepositorio Repositorio;
 
@@ -106,7 +106,7 @@ namespace Servicios.Impl
                     foreach (var m in j.Movimientos)
                     {
                         m.Jugada = jdb;
-                        var mdb = Repositorio.Obtener<Movimiento>(x => x.Origen == m.Origen && x.Destino == m.Destino);
+                        var mdb = Repositorio.Obtener<Movimiento>(x => x.Origen == m.Origen && x.Destino == m.Destino && x.MonedaB == m.MonedaB);
                         if (mdb != null)
                         {
                             mdb.Actualizar(m);
